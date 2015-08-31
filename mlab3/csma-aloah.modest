@@ -14,33 +14,40 @@ int[4] maxSignals; // maxSignals[i] is the maximum number of transmissions that 
 // Insert your properties here
 property timeWhenFinished = Xmax(time | packetsSent == PACKETS); 
 
-
 // Models the multiple access protocol of node i;
 // use send_start to start a transmission (but only if packetsToSend[i] > 0)
 // and send_stop to stop transmitting (but no sooner than 0.5 time units after send_start)
 process Node(int i)
 {
-	
 	// Insert your code here
 	clock c;
 	
+	// used for beb
+	//int col_counter;
+	//int waiting_time = 0;
+	
 	// still packets to send
-	while(packetsToSend[i] > 0) {
+	while(packetsSent<PACKETS) { //packetsToSend[i] > 0 array zugriff lässt chrome abschmatzen...
 		// no collision at beginning of time slot
-		when urgent (signals[i] == 0)
+		if(signals[i] == 0) {
 			palt {
 				// send packet with probability P
-				:P: urgent send_start {= c=0 =};
-					// transmission time
+				// hier noch struct/temp nondet...
+				:P*100: urgent send_start {= c=0 =};
+					
 					alt {
 						// no collision
 						::when urgent(c==1 && maxSignals[i]==0) send_stop {= packetsToSend[i]--, packetsSent++ =}
 						// collision detected
-						::when urgent (c==1 && maxSignals[i] > 0) send_stop
+						::when urgent(c==1 && maxSignals[i] > 0) send_stop //{= col_counter++ =}
 					}
 				// do not send packet yet
-				:1-P: urgent tau
+				:(1-P)*100: urgent tau
 			}
+		} else {
+			// here beb delay...
+			urgent tau //{= col_counter++ =}
+		}
 	}
 }
 
