@@ -30,7 +30,7 @@ process Node(int i)
 		when urgent (signals[i] == 0)
 			palt {
 				// send packet with probability P
-				:1: urgent send_start {= c=0 =};
+				:P: urgent send_start {= c=0 =};
 					// transmission time
 					alt {
 						// no collision
@@ -39,7 +39,7 @@ process Node(int i)
 						::when urgent (c==1 && maxSignals[i] > 0) send_stop
 					}
 				// do not send packet yet
-				:1: urgent tau
+				:1-P: urgent tau
 			}
 	}
 }
