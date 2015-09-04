@@ -22,31 +22,25 @@ process Node(int i)
 	// Insert your code here
 	clock c;
 	
-	// used for beb
-	//int col_counter;
-	//int waiting_time = 0;
-	
 	// still packets to send
-	while(packetsSent<PACKETS) { //packetsToSend[i] > 0 array zugriff lässt chrome abschmatzen...
-		// no collision at beginning of time slot
-		if(signals[i] == 0) {
-			palt {
-				// send packet with probability P
-				// hier noch struct/temp nondet...
-				:P*100: urgent send_start {= c=0 =};
-					
-					alt {
-						// no collision
-						::when urgent(c==1 && maxSignals[i]==0) send_stop {= packetsToSend[i]--, packetsSent++ =}
-						// collision detected
-						::when urgent(c==1 && maxSignals[i] > 0) send_stop //{= col_counter++ =}
-					}
-				// do not send packet yet
-				:(1-P)*100: urgent tau
+	while(packetsSent < PACKETS) {
+		when(packetsToSend[i]>0)
+		do {
+			// send frame immediately
+			urgent send_start {= c=0 =};
+			when(c==1) urgent send_stop;
+			// no collision after sending detected
+			if(maxSignals[i]==0) {
+				// no collision detected
+				urgent break {= packetsToSend[i]--, packetsSent++ =}
+			} else {
+				palt {
+					// send packet with probability P in next time slot
+					:P*100: urgent tau
+					// wait one time slot
+					:(1-P)*100: delay(1) tau
+				}
 			}
-		} else {
-			// here beb delay...
-			urgent tau //{= col_counter++ =}
 		}
 	}
 }

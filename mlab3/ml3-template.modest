@@ -13,6 +13,7 @@ int[4] maxSignals; // maxSignals[i] is the maximum number of transmissions that 
 // Properties
 // Insert your properties here
 
+
 // Models the multiple access protocol of node i;
 // use send_start to start a transmission (but only if packetsToSend[i] > 0)
 // and send_stop to stop transmitting (but no sooner than 0.5 time units after send_start)
