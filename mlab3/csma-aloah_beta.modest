@@ -2,7 +2,7 @@
 const real P = 0.35; // probability p for the Aloha variants
 
 patient action send_start, send_stop;
-
+action wait, sent;
 int packetsSent; // have each node increment this variable whenever it has sent a packet successfully (i.e. 1 time unit without collision)
 int[4] packetsToSend; // packetsToSend[i] is the number of packets available to send by node i; have node i decrement it as necessary (e.g. whenever it has successfully sent a packet)
 int[4] signals; // signals[i] is the number of transmissions currently being sensed at node i (i.e. signals[i] > 1 means that there is a collision); the value must only be changed by the SharedMedium process
@@ -27,26 +27,26 @@ process Node(int i)
 	while (packetsSent < PACKETS) {
 		
 		// Packet available.
-		when (packetsToSend[i] > 0)
+		when urgent(packetsToSend[i] > 0)
 		
 		// Sensed idle?
 		alt {
 			:: when (signals[i] < 1)
 				// Idle.
-				send_start; delay(1) send_stop;
+				urgent send_start; delay(1) send_stop;
 				
 				// Check for collision.
 				alt {
-					:: when (maxSignals[i]<=1)
+					:: when urgent (maxSignals[i]<=1)
 						// No collision detected. Frame has been successfully sent.
-						{= packetsToSend[i]--, packetsSent++ =}
+						sent {= packetsToSend[i]--, packetsSent++ =}
 						
 					:: when (maxSignals[i]>1)
 						// Collision
 						do {
-							palt {
+							urgent palt {
 								// Try to send packet with probability P in next time slot.
-								:P*100: break
+								:P*100: urgent break
 					
 								// Wait one time slot.
 								:(1-P)*100: delay(1) tau
@@ -54,9 +54,9 @@ process Node(int i)
 						}
 				}
 				
-			:: when(signals[i] > 0)
+			:: when (signals[i] > 0)
 				// Channel is busy. Wait one time slot.
-				delay(1) tau
+				delay(1) wait
 		}
 	}
 }
