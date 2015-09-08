@@ -2,7 +2,7 @@
 const real P = 0.35; // probability p for the Aloha variants
 
 patient action send_start, send_stop;
-action sent_noCol, sent_Col, wait, collision, loop, bam;
+action sent, wait, collision, loop, bam;
 
 int packetsSent; // have each node increment this variable whenever it has sent a packet successfully (i.e. 1 time unit without collision)
 int[4] packetsToSend; // packetsToSend[i] is the number of packets available to send by node i; have node i decrement it as necessary (e.g. whenever it has successfully sent a packet)
@@ -25,40 +25,39 @@ process Node(int i)
 	clock c;
 	
 	// Still packets to send
-	while(packetsSent < PACKETS) {
-		// Wait until a packet is available to send.
-		when(packetsToSend[i] > 0) urgent send_start {= c=0 =}; when urgent(c==1) send_stop;
-		// Check collision.
-		if(maxSignals[i]==0) {
-			// No collision detected. Frame has been successfully sent.
-			urgent {= packetsToSend[i]--, packetsSent++ =}
-		} else {
-			// Collision detected. Try sending frame in next time slot if medium is sensed idle.
-			// Otherwise wait for next time slot.
-			do {
-				// Idle?
-				:: when urgent(signals[i] == 0)
-				// Sensed idle.
-					palt {
-						// Send packet with probability P in next time slot.
-						:P*100: urgent send_start {= c=0 =}; when urgent(c==1) send_stop;
-							// Collision?
-							if(maxSignals[i]==0) {
-								// No collision detected.
-								urgent {= packetsToSend[i]--, packetsSent++ =};
-								urgent break
-							} else {
-								// Collision.
-								urgent collision
+	while (packetsSent < PACKETS) {
+		
+		// Packet available.
+		when urgent (packetsToSend[i] > 0)
+		
+		// Sensed idle?
+		alt {
+			:: when(signals[i] == 0)
+				// Idle.
+				urgent send_start {= c=0 =}; when urgent(c==1) send_stop;
+				
+				// Check for collision.
+				alt {
+					:: when(maxSignals[i]==0)
+						// No collision detected. Frame has been successfully sent.
+						urgent sent {= packetsToSend[i]--, packetsSent++ =}
+						
+					:: when(maxSignals[i]!=0)
+						// Collision
+						do {
+							urgent palt {
+								// Try to send packet with probability P in next time slot.
+								:P*100: urgent break
+					
+								// Wait one time slot.
+								:(1-P)*100: urgent {= c=0 =}; when urgent(c==1) wait
 							}
-					
-						// Wait one time slot
-						:(1-P)*100: urgent {= c=0 =}; when urgent(c==1) wait
-					}
-					
-				// Wait for next time slot
-				:: when (signals[i] != 0) urgent {= c=0 =}; when urgent(c==1) wait
-			}
+						}
+				}
+				
+			:: when (signals[i] != 0)
+				// Channel is busy. Wait one time slot.
+				urgent {= c=0 =}; when urgent(c==1) tau
 		}
 	}
 }
