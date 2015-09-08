@@ -27,26 +27,26 @@ process Node(int i)
 	while (packetsSent < PACKETS) {
 		
 		// Packet available.
-		when urgent(packetsToSend[i] > 0)
+		when (packetsToSend[i] > 0)
 		
 		// Sensed idle?
 		alt {
-			:: when urgent (signals[i] == 0)
+			:: when (signals[i] < 1)
 				// Idle.
 				send_start; delay(1) send_stop;
 				
 				// Check for collision.
 				alt {
-					:: when urgent(maxSignals[i]==0)
+					:: when (maxSignals[i]<=1)
 						// No collision detected. Frame has been successfully sent.
 						{= packetsToSend[i]--, packetsSent++ =}
 						
-					:: when urgent(maxSignals[i]!=0)
+					:: when (maxSignals[i]>1)
 						// Collision
 						do {
-							urgent palt {
+							palt {
 								// Try to send packet with probability P in next time slot.
-								:P*100: urgent break
+								:P*100: break
 					
 								// Wait one time slot.
 								:(1-P)*100: delay(1) tau
@@ -54,7 +54,7 @@ process Node(int i)
 						}
 				}
 				
-			:: when urgent(signals[i] != 0)
+			:: when(signals[i] > 0)
 				// Channel is busy. Wait one time slot.
 				delay(1) tau
 		}
