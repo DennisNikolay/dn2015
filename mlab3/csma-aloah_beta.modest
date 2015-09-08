@@ -37,14 +37,14 @@ process Node(int i)
 				
 				// Check for collision.
 				alt {
-					:: when urgent(maxSignals[i]==1)
+					:: when urgent(maxSignals[i]==0)
 						// No collision detected. Frame has been successfully sent.
 						{= packetsToSend[i]--, packetsSent++ =}
 						
-					:: when urgent(maxSignals[i]!=1)
+					:: when urgent(maxSignals[i]!=0)
 						// Collision
 						do {
-							palt {
+							urgent palt {
 								// Try to send packet with probability P in next time slot.
 								:P*100: urgent break
 					
