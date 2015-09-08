@@ -28,29 +28,29 @@ process Node(int i)
 	while (packetsSent < PACKETS) {
 		
 		// Packet available.
-		when urgent (packetsToSend[i] > 0)
+		when (packetsToSend[i] > 0)
 		
 		// Sensed idle?
 		alt {
-			:: when(signals[i] == 0)
+			:: when (signals[i] == 0)
 				// Idle.
 				urgent send_start {= c=0 =}; when urgent(c==1) send_stop;
 				
 				// Check for collision.
 				alt {
-					:: when(maxSignals[i]==0)
+					:: when (maxSignals[i]==1)
 						// No collision detected. Frame has been successfully sent.
-						urgent sent {= packetsToSend[i]--, packetsSent++ =}
+						urgent {= packetsToSend[i]--, packetsSent++ =}
 						
-					:: when(maxSignals[i]!=0)
+					:: when (maxSignals[i]!=1)
 						// Collision
 						do {
 							urgent palt {
 								// Try to send packet with probability P in next time slot.
-								:P*100: urgent break
+								:P: urgent break
 					
 								// Wait one time slot.
-								:(1-P)*100: urgent {= c=0 =}; when urgent(c==1) wait
+								:1-P: {= c=0 =}; when urgent(c==1) wait
 							}
 						}
 				}
