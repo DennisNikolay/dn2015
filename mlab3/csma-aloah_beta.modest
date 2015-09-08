@@ -2,7 +2,6 @@
 const real P = 0.35; // probability p for the Aloha variants
 
 patient action send_start, send_stop;
-action sent, wait, collision, loop, bam;
 
 int packetsSent; // have each node increment this variable whenever it has sent a packet successfully (i.e. 1 time unit without collision)
 int[4] packetsToSend; // packetsToSend[i] is the number of packets available to send by node i; have node i decrement it as necessary (e.g. whenever it has successfully sent a packet)
