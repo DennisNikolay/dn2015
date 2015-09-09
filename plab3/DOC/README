@@ -1,0 +1,31 @@
+Mehrere Server starten (in Eclipse, sowie mittels java -jar über Kommandozeile)
+Server erwarten als erstes auf StdIn einen Input der den Port angibt, auf dem der Server laufen soll
+Danach ist es jederzeit möglich über StdIn einen Befehl "connect host port" einzugeben.
+
+Der neue chatclient fragt ebenfalls in einem popup nach dem port
+die alten chatclienten sind nichtmehr 100% kompatibel zu dem neuen server, wegen änderung in SEND befehl
+
+Ablaufbeispiel:
+
+Öffne Kommandozeile, gebe ein java -jar /path/to/jarfile/server.jar
+Gebe auf Kommandozeile "42015" ein
+öffne chatclient-42000.html
+gebe in popup "42015" ein
+verbinde und logge ein
+Öffne Kommandozeile, gebe ein java -jar /path/to/jarfile/server.jar
+Gebe auf Kommandozeile "42000" ein
+gebe auf kommandozeile "connect localhost 42015" ein
+öffne chatclient-42000.html
+gebe in popup "42000" ein
+verbinde und logge ein
+man sollte beide clienten sehen und nachrichten schicken können (kein ack)
+
+Tests die man machen könnte:
+
+zyklische serverketten
+lange serverketten
+abgefahrene baumstrukturen
+
+und generell mal von a nach b connecten, mal von b nach a 
+zudem mal a hochfahren, paar user connecten, dann b hochfahren paar user connecten, dann beide verbinden (dabei vlt ein zykel schließen?)
+du siehst deiner fantasie sind keine grenzen gesetzt :DD
