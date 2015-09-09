@@ -120,7 +120,6 @@ public class DNChat implements DNChatInterface {
 				}
 			}else{
 				//There is no connection to the User.
-				System.out.println("HERE");
 				String descript=message[2];
 				arriving=new User(socket, false, hopCount);
 				double userId = Double.parseDouble(head[1]);
@@ -167,7 +166,7 @@ public class DNChat implements DNChatInterface {
 		}
 	}
 	/**
-	 * propagates a message to all servers, except socket s
+	 * propagates a message to all servers that are directly connected to this server, except socket s
 	 * @param msg
 	 */
 	synchronized private void propagateMsgToServers(String msg, Websocket s){
@@ -276,19 +275,17 @@ public class DNChat implements DNChatInterface {
 				socket.sendText(output);
 			}
 			// ... and send message to receiver(s)
-			String s = "SEND " + String.format("%.0f", msgNr) + "\r\n" + String.format("%.0f", usr.getChatId()) + "\r\n" + message[2];
+			String s = "SEND " + String.format("%.0f", msgNr) + "\r\n"+ message[1]+ "\r\n" + String.format("%.0f", usr.getChatId()) + "\r\n" + message[2];
 			// to all currently logged in users
 			if (message[1].equals("*")) {
-				propagateMsgToClients(s);
+				propagateMsgToClients(s, usr);
 				propagateMsgToServers(s, null);
 			} else {
-				double receiverId = Double.parseDouble(message[1]);
-				for (Iterator<User> iterator = clients.values().iterator(); iterator
-						.hasNext();) {
-					User u = (User) iterator.next();
-					// Receiver found. Leave switch case.
-					if (u.getChatId() == receiverId) {
-						unicastMsg(u, s);
+				User receiver=getUser(message[1]);
+				//Send the message to the next hop of receiver (possibly receiver himself)
+				if(receiver!=null){
+					if(clients.containsKey(receiver.getSocket().getID())){
+						unicastMsg(clients.get(receiver.getSocket().getID()), s);
 						break switchCase;
 					}
 				}
