@@ -114,8 +114,12 @@ public class User {
 		isServer=b;
 	}
 	
+	public boolean isServer(){
+		return isServer;
+	}
+	
 	public boolean hasSendMessages(){
-		return messagesSent.isEmpty();
+		return !messagesSent.isEmpty();
 	}
 	
 }

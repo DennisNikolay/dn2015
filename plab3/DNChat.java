@@ -52,6 +52,17 @@ public class DNChat implements DNChatInterface {
 		User user = new User(socket);
 		clients.put(socket.getID(), user);
 	}
+	
+	public void pushMessageServer(Websocket socket, String msg){
+		String[] message = msg.split("\r\n");
+		String[] head = message[0].split(" ");
+		String output = "";
+		User usr = clients.get(socket.getID());
+		
+		switch(head[0]){
+		
+		}
+	}
 
 	/**
 	 * Handles the incoming DNChat messages from the users.
@@ -64,6 +75,12 @@ public class DNChat implements DNChatInterface {
 		String output = "";
 		
 		User usr = clients.get(socket.getID());
+		
+		if(usr.isServer()){
+			 pushMessageServer(socket, msg);
+			 return;
+		}
+		
 		switchCase: switch (head[0]) {
 		
 		// Authentication request
@@ -185,18 +202,16 @@ public class DNChat implements DNChatInterface {
 			break;
 		
 		case "SRVR":
-			/*if(usr.hasSendMessages()){
-				System.out.println("Has send messages");
+			if(usr.hasSendMessages()){
 				handleInvdMsg(socket);
 				break;
 			}
-			if(head[1]==String.valueOf(0)){
+			if(head[1].equals(String.valueOf(0))){
 				usr.setServer(true);
 			}else{
-				System.out.println(head[1]);
 				handleInvdMsg(socket);
 				break;
-			}*/
+			}
 			usr.setServer(true);
 			break;
 		// Invalid messages handled here. Disconnect user.
