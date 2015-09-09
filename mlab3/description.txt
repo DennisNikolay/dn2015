@@ -1,0 +1,31 @@
+DESCRIPTION
+
+All of the multiple access models wait for their packets they have to send and only send them when the channel is sensed idle. This procedure is done until all packets have been sent. If a collision occurs there is a random delay before the next retransmission attempt.
+
+
+DIFFERENCES
+
+CSMA <-> CSMACD
+The main differences between the CSMA and the CSMACD files is the delay between send_start and send_stop.
+In the CSMA models, it’s simply a slot of one packet transmission time namely 1.
+In the CSMACD models it says
+
+send_start {= c=0 =}; delay(0.5, c==1 || signals[i] > 1 ) send_stop;
+
+meaning wait at least 0.5 time units (because of propagation delay) and then wait further until a collision occurs (signals[i] > 1) or if the transmission is successfully completed (c==1).
+
+
+ALOAH <-> BEB
+The main differences between the ALOAH and the BEB files is the else-block that is passed in case of a collision detection.
+Aloha Backoff is attempting a retransmission after a collision with probability P in each slot of 1 packet transmission using:
+
+do {
+urgent palt { :P: urgent break
+:1-P: delay(1) tau
+}}
+
+After the m-th collision, BEB Backoff chooses K from {0,1,2,…,2^m-1} and waits K slots before transmitting again:
+
+delay(DiscreteUniform(0, max(0, powerOfTwo - 1))) tau
+
+powerOfTwo is doubled whenever a collision occurs and is reset when a transmission was successful.

@@ -1,7 +1,8 @@
-﻿const int PACKETS; // total number of packets to send in one simulation run
-const real P; // probability p for the Aloha variants
+﻿const int PACKETS = 100; // total number of packets to send in one simulation run
+//const real P; // probability p for the Aloha variants
 
 patient action send_start, send_stop;
+action sent_noCol, sent_Col, wait, collision, loop, bam;
 
 int packetsSent; // have each node increment this variable whenever it has sent a packet successfully (i.e. 1 time unit without collision)
 int[4] packetsToSend; // packetsToSend[i] is the number of packets available to send by node i; have node i decrement it as necessary (e.g. whenever it has successfully sent a packet)
@@ -12,6 +13,7 @@ int[4] maxSignals; // maxSignals[i] is the maximum number of transmissions that 
 
 // Properties
 // Insert your properties here
+property timeWhenFinished = Xmax(time | packetsSent == PACKETS); 
 
 
 // Models the multiple access protocol of node i;
@@ -20,6 +22,27 @@ int[4] maxSignals; // maxSignals[i] is the maximum number of transmissions that 
 process Node(int i)
 {
 	// Insert your code here
+	clock c;
+	int powerOfTwo = 1;
+	
+	do {
+		// Packet available and sensed idle?
+		when urgent(packetsToSend[i] > 0 && signals[i] < 1)
+		
+		// Try transmission. Stop transmission when it's completed or a collision occurs but no sooner than 0.5 time units after sending.
+		send_start {= c=0 =}; delay(0.5, c==1 || signals[i] > 1 ) send_stop;
+		
+		// Check for collision.
+		urgent if(maxSignals[i]<=1) {
+			// No collision detected. Frame has been successfully sent.
+			urgent {= packetsToSend[i]--, packetsSent++, powerOfTwo=1 =}	
+		} else {
+			// Collision
+			{= powerOfTwo=powerOfTwo*2 =};
+			// Wait
+			delay(DiscreteUniform(0, max(0, powerOfTwo - 1))) tau
+		}
+	}
 }
 
 /* Do not change anything between this line and the end of the file */

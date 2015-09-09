@@ -1,0 +1,93 @@
+RESULTS
+
+(All analyses have been done with a maximum run length of 20.000)
+
+
+CSMA-ALOAH
+
+Analysis results for csma-aloah.modest
+
++ Experiment P=0.35
+  Total time: 98.3 s
+
+  + Property timeWhenFinished
+    Mean: 255.657603748489
+    Runs: 1000
+    Time: 98.3 s
+
++ Experiment P=0.25
+  Total time: 69.7 s
+
+  + Property timeWhenFinished
+    Mean: 215.171854813909
+    Runs: 1000
+    Time: 69.7 s
+
++ Experiment P=0.15
+  Total time: 52.3 s
+
+  + Property timeWhenFinished
+    Mean: 198.251890073405
+    Runs: 1000
+    Time: 52.3 s
+
+
+
+CSMACD-ALOAH
+
+Analysis results for csmacd-aloah.modest
+
++ Experiment P=0.35
+  Total time: 95.2 s
+
+  + Property timeWhenFinished
+    Mean: 191.190915180781
+    Runs: 1000
+    Time: 95.2 s
+
++ Experiment P=0.25
+  Total time: 69.8 s
+
+  + Property timeWhenFinished
+    Mean: 181.761210810392
+    Runs: 1000
+    Time: 69.8 s
+
++ Experiment P=0.15
+  Total time: 52.8 s
+
+  + Property timeWhenFinished
+    Mean: 182.560771969961
+    Runs: 1000
+    Time: 52.8 s
+
+
+
+CSMA-BEB
+
+Analysis results for csma-beb.modest
+Total time: 40.6 s
+
++ Property timeWhenFinished
+  Mean: 239.14993210326
+  Runs: 1000
+  Time: 40.6 s
+
+
+
+CSMACD-BEB
+
+Analysis results for csmacd-beb.modest
+Total time: 39.8 s
+
++ Property timeWhenFinished
+  Mean: 224.779393619021
+  Runs: 1000
+  Time: 39.8 s
+
+
+
+Except for CSMA-ALOAH with a probability of 0.35, all other ALOAH models have a better performance than the BEB-models.
+The best performance was given by CSMACD-ALOAH with a retransmission-probabillity of 0.25.
+
+Although BEB was in general slower than ALOAH backoff, its reason of usage in practice is the fact that the number of competing devices sharing a link is generally unknown. Since reattempting transmissions leads to further collisions when multiple devices are sending, an exponential increase of the window size (and with that the delay) reduces collisions more effectively and faster than a linear increase would. Therefor it’s for instance used in ethernet networks.

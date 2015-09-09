@@ -1,7 +1,8 @@
 ﻿const int PACKETS = 100; // total number of packets to send in one simulation run
-const real P = 0.35; // probability p for the Aloha variants
+const real P; // probability p for the Aloha variants
 
 patient action send_start, send_stop;
+action sent_noCol, sent_Col, wait, collision, loop, bam;
 
 int packetsSent; // have each node increment this variable whenever it has sent a packet successfully (i.e. 1 time unit without collision)
 int[4] packetsToSend; // packetsToSend[i] is the number of packets available to send by node i; have node i decrement it as necessary (e.g. whenever it has successfully sent a packet)
@@ -14,6 +15,7 @@ int[4] maxSignals; // maxSignals[i] is the maximum number of transmissions that 
 // Insert your properties here
 property timeWhenFinished = Xmax(time | packetsSent == PACKETS); 
 
+
 // Models the multiple access protocol of node i;
 // use send_start to start a transmission (but only if packetsToSend[i] > 0)
 // and send_stop to stop transmitting (but no sooner than 0.5 time units after send_start)
@@ -22,37 +24,28 @@ process Node(int i)
 	// Insert your code here
 	clock c;
 	
-	// Still packets to send
-	while (packetsSent < PACKETS) {	
-		urgent tau;
-		// Packet available and channel sensed idle?
-		alt {
-			:: when (packetsToSend[i] > 0 && signals[i] < 1)
-				// Idle.
-				urgent send_start; delay(1) tau; urgent send_stop;
+	do {
+		// Packet available and sensed idle?
+		when urgent(packetsToSend[i] > 0 && signals[i] < 1)
+		
+		// Try transmission. Stop transmission when it's completed or a collision occurs but no sooner than 0.5 time units after sending.
+		send_start {= c=0 =}; delay(0.5, c==1 || signals[i] > 1 ) send_stop;
+		
+		// Check for collision.
+		urgent if(maxSignals[i]<=1) {
+			// No collision detected. Frame has been successfully sent.
+			urgent {= packetsToSend[i]--, packetsSent++ =}	
+		} else {
+			// Collision
+			do {
+				urgent palt {
+					// Try to send packet with probability P in next time slot.
+					:P: urgent break
 				
-				// Check for collision.
-				alt {
-					:: when urgent(maxSignals[i]<=1)
-						// No collision detected. Frame has been successfully sent.
-						{= packetsToSend[i]--, packetsSent++ =}
-						
-					:: when urgent(maxSignals[i]>1)
-						// Collision
-						do {
-							urgent palt {
-								// Try to send packet with probability P in next time slot.
-								:P*100: urgent break
-					
-								// Wait one time slot.
-								:(1-P)*100: delay(1) tau
-							}
-						}
+					// Wait one time slot.
+					:1-P: delay(1) tau
 				}
-				
-			:: when urgent(packetsToSend[i] > 0 && signals[i] > 0)
-				// Channel is busy. Wait one time slot.
-				tau; delay(1) tau
+			}
 		}
 	}
 }
