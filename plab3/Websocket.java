@@ -64,6 +64,13 @@ public class Websocket {
 		Lobby.dnChat.addClient(this);	
 	}
 	
+	public Websocket(DataInputStream inStream, DataOutputStream outStream, boolean isServer){
+		this(inStream, outStream);
+		if(isServer){
+			Lobby.dnChat.setServer(this);	
+		}
+	}
+	
 	/**
 	 * Checks regulary for incoming messages, sends them to DNChat
 	 * Checks for outgoing messages, sends them to outputStream (Client)
@@ -231,10 +238,12 @@ public class Websocket {
 	 * @param content
 	 */
 	public void sendText(String content){
+		System.out.println("SENT TO CLIENT: "+content);
 		sendMessage(content, 1);
 	}
 	
 	public void sendTextAsClient(String content){
+		System.out.println("SENT TO SERVER: "+content);
 		sendMessageAsClient(content, 1);
 	}
 	
@@ -407,5 +416,6 @@ public class Websocket {
 	public String toString() {
 		return "Websocket [ID=" + ID + "]";
 	}
+
 	
 }

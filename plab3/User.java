@@ -16,7 +16,7 @@ public class User {
 	/**
 	 * The user's websocket transporting in and outcoming messages.	
 	 */
-	private final Websocket socket;
+	private Websocket socket;
 	
 	/**
 	 * The user's unique chat id.
@@ -45,81 +45,96 @@ public class User {
 	
 	private boolean isServer;
 	private int hopCount;
-	private User nextHop;
 		
 	public User(Websocket socket) {
 		this.socket = socket;
 		state = State.connected;
 		messagesSent = new LinkedList<Double>();
 		isServer=false;
+		hopCount=0;
 	}
-	public User(Websocket socket, boolean server) {
+	public User(Websocket socket, boolean server, int hops) {
 		this.socket = socket;
 		state = State.connected;
 		messagesSent = new LinkedList<Double>();
-		isServer=server;
+		setServer(server);
+		hopCount=hops;
 	}
 	
-	public State getState() {
+	synchronized public State getState() {
 		return state;
 	}
 		
-	public void setState(State state) {
+	synchronized public void setState(State state) {
 		this.state = state;
 	}
 		
-	public void setId(double id) {
+	synchronized public void setId(double id) {
 		this.chatId = id;
 	}
 
-	public void setChatName(String chatName) {
+	synchronized public void setChatName(String chatName) {
 		this.chatName = chatName;
 	}
 
-	public void setChatDescription(String chatDescription) {
+	synchronized public void setChatDescription(String chatDescription) {
 		this.chatDescription = chatDescription;
 	}
 
-	public Websocket getSocket() {
+	synchronized public Websocket getSocket() {
 		return socket;
 	}
+	
+	synchronized public void setSocket(Websocket s){
+		socket=s;
+	}
 
-	public String getChatName() {
+	synchronized public String getChatName() {
 		return chatName;
 	}
 	
-	public double getChatId() {
+	synchronized public double getChatId() {
 		return chatId;
 	}
 
-	public String getChatDescription() {
+	synchronized public String getChatDescription() {
 		return chatDescription;
 	}
 
-	public LinkedList<Double> getMessagesSent() {
+	synchronized public LinkedList<Double> getMessagesSent() {
 		return messagesSent;
 	}
 
-	public void addMsg(Double m) {
+	synchronized public void addMsg(Double m) {
 		messagesSent.add(m);
 	}
 
 	@Override
-	public String toString() {
+	synchronized public String toString() {
 		return "User [socket=" + socket + ", chatId=" + chatId + ", chatName="
 				+ chatName + ", state=" + state + "]";
 	}
 	
 	public void setServer(boolean b){
 		isServer=b;
+		if(isServer){
+			ArrivePropagationThread.propagateArrival();
+		}
 	}
 	
-	public boolean isServer(){
+	synchronized public boolean isServer(){
 		return isServer;
 	}
 	
-	public boolean hasSendMessages(){
+	synchronized public boolean hasSendMessages(){
 		return !messagesSent.isEmpty();
+	}
+
+	synchronized public int getHopCount() {
+		return hopCount;
+	}
+	synchronized public void setHopCount(int hopCount) {
+		this.hopCount = hopCount;
 	}
 	
 }
