@@ -22,42 +22,27 @@ property timeWhenFinished = Xmax(time | packetsSent == PACKETS);
 process Node(int i)
 {
 	// Insert your code here
-	clock c;
-	
-	// Still packets to send
-	while(packetsSent < PACKETS) {
-		// Wait until a packet is available to send.
-		when(packetsToSend[i] > 0) urgent send_start {= c=0 =}; when urgent(c==1) send_stop;
-		// Check collision.
-		if(maxSignals[i]==0) {
+	do {
+		// Packet available and sensed idle?
+		when urgent(packetsToSend[i] > 0 && signals[i] < 1)
+		
+		// Try transmission.
+		send_start; delay(1) send_stop;
+		
+		// Check for collision.
+		urgent if(maxSignals[i]<=1) {
 			// No collision detected. Frame has been successfully sent.
-			urgent {= packetsToSend[i]--, packetsSent++ =}
+			urgent {= packetsToSend[i]--, packetsSent++ =}	
 		} else {
-			// Collision detected. Try sending frame in next time slot if medium is sensed idle.
-			// Otherwise wait for next time slot.
+			// Collision
 			do {
-				// Idle?
-				:: when urgent(signals[i] == 0)
-				// Sensed idle.
-					palt {
-						// Send packet with probability P in next time slot.
-						:P*100: urgent send_start {= c=0 =}; when urgent(c==1) send_stop;
-							// Collision?
-							if(maxSignals[i]==0) {
-								// No collision detected.
-								urgent {= packetsToSend[i]--, packetsSent++ =};
-								urgent break
-							} else {
-								// Collision.
-								urgent collision
-							}
-					
-						// Wait one time slot
-						:(1-P)*100: urgent {= c=0 =}; when urgent(c==1) wait
-					}
-					
-				// Wait for next time slot
-				:: when (signals[i] != 0) urgent {= c=0 =}; when urgent(c==1) wait
+				urgent palt {
+					// Try to send packet with probability P in next time slot.
+					:P: urgent break
+				
+					// Wait one time slot.
+					:1-P: delay(1) tau
+				}
 			}
 		}
 	}
