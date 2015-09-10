@@ -32,15 +32,6 @@ public class ArrivePropagationThread extends Thread {
 				}
 			}
 		}
-		for(User u:Lobby.dnChat.getFarUsers()){
-			String s="ARRV " + String.format("%.0f", u.getChatId()) + "\r\n" +  u.getChatName() + "\r\n" +  u.getChatDescription()+"\r\n"+u.getHopCount();
-			for(User server:Lobby.dnChat.getUsers().values()){
-				if(server.isServer()){
-					server.getSocket().sendTextAsClient(s);
-				}
-			}
-		}
-		
 	}
 
 }

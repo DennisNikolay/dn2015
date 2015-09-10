@@ -1,3 +1,4 @@
+import java.rmi.UnexpectedException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -94,7 +95,7 @@ public class DNChat implements DNChatInterface {
 					//TODO: User with that number does not exsist
 					return;
 				}
-				unicastMsg(receiver, msg);
+				sendToNextHopServer(receiver, msg);
 				return;
 			}
 			//Multicast:
@@ -137,6 +138,10 @@ public class DNChat implements DNChatInterface {
 				propagateMsgToClients(msg);
 				propagateMsgToServers(msg, socket);
 			}
+			break;
+		case "ACKN":
+			User receiver=getUser(message[2]);
+			sendToNextHopServer(receiver,msg);
 			break;
 		}
 	}
@@ -188,6 +193,13 @@ public class DNChat implements DNChatInterface {
 		if(receiver!=null){
 			if(clients.containsKey(receiver.getSocket().getID())){
 				unicastMsg(clients.get(receiver.getSocket().getID()), s);
+			}else{
+				try {
+					throw new UnexpectedException("This should not happen");
+				} catch (UnexpectedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -298,10 +310,13 @@ public class DNChat implements DNChatInterface {
 			} else {
 				User receiver=getUser(message[1]);
 				//Send the message to the next hop of receiver (possibly receiver himself)
-				sendToNextHopServer(receiver,s);
-				// No receiver with given userId found. Send FAIL msg to sender.
-				output = "FAIL " + String.format("%.0f", msgNr) + "\r\n" + "NUMBER";
-				socket.sendText(output);
+				if(receiver!=null){
+					sendToNextHopServer(receiver,s);
+				}else{
+					// No receiver with given userId found. Send FAIL msg to sender.
+					output = "FAIL " + String.format("%.0f", msgNr) + "\r\n" + "NUMBER";
+					socket.sendText(output);	
+				}
 				break;
 			}
 			break;
@@ -379,6 +394,12 @@ public class DNChat implements DNChatInterface {
 		for (Iterator<User> iterator = clients.values().iterator(); iterator.hasNext();) {
 			User u = (User) iterator.next();
 			if (u.getMessagesSent().contains(msgNr)) {
+				return false;
+			}
+		}
+		for(Iterator<User> iterator = farUsers.iterator(); iterator.hasNext();){
+			User u = (User) iterator.next();
+			if(u.getMessagesSent().contains(msgNr)){
 				return false;
 			}
 		}
