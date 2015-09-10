@@ -51,7 +51,7 @@ public class DNChat implements DNChatInterface {
 	 */
 	public DNChat(){
 		clients = new ConcurrentHashMap<Integer, User>();
-		new ArrivePropagationThread().start();
+		//new ArrivePropagationThread().start();
 	}
 	
 	/**
@@ -110,6 +110,9 @@ public class DNChat implements DNChatInterface {
 			break;
 		case "ARRV":
 			int hopCount=Integer.valueOf(message[3])+1;
+			if (hopCount>15){
+				return;
+			}
 			User arriving=getUser(head[1]);
 			if(arriving!=null){
 				//There is already an other connection to the user over a (possible different) server
@@ -142,6 +145,21 @@ public class DNChat implements DNChatInterface {
 		case "ACKN":
 			User receiver=getUser(message[2]);
 			sendToNextHopServer(receiver,msg);
+			break;
+		case "LEFT":
+			User left=getUser(head[1]);
+			if(left==null){
+				return;
+			}
+			if(clients.get(left.getSocket().getID()).getSocket().equals(socket)){
+				farUsers.remove(left);
+				propagateMsgToServers(msg, socket);
+				propagateMsgToClients(msg, null);
+			}else{
+				//TODO:THINK HERE COUNT TO INFINITY PROBLEM
+				//IDEA OF THIS LINE: "Oh you lost your connection to that user? Well I've got a connection to that user not running over you"
+				socket.sendTextAsClient("ARRV " + String.format("%.0f", left.getChatId()) + "\r\n" +  left.getChatName() + "\r\n" +  left.getChatDescription()+"\r\n"+left.getHopCount());
+			}
 			break;
 		}
 	}
@@ -415,10 +433,12 @@ public class DNChat implements DNChatInterface {
 	synchronized public void removeClient(Websocket socket) {
 		User leftUser = clients.remove(socket.getID());
 		socket.doClose.set(true);
-		String s = "LEFT " + String.format("%.0f", leftUser.getChatId());
-		for (Iterator<User> iterator = clients.values().iterator(); iterator.hasNext();) {
-			User u = (User) iterator.next();
-			u.getSocket().sendText(s);
+		if(!leftUser.isServer()){
+			String s = "LEFT " + String.format("%.0f", leftUser.getChatId());
+			for (Iterator<User> iterator = clients.values().iterator(); iterator.hasNext();) {
+				User u = (User) iterator.next();
+				unicastMsg(u, s);
+			}
 		}
 	}
 
