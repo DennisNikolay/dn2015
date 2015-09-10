@@ -83,6 +83,9 @@ public class DNChat implements DNChatInterface {
 		
 		switch(head[0]){
 		case "SEND":
+			User sender=getUser(message[2]);
+			Double msgNr = Double.parseDouble(head[1]);
+			sender.addMsg(msgNr);
 			//Does not have to check conditions in messages, as they are already checked by the server, directly connected to the user
 			if(!message[1].equals("*")){
 			//Unicast:
@@ -92,9 +95,9 @@ public class DNChat implements DNChatInterface {
 					return;
 				}
 				unicastMsg(receiver, msg);
+				return;
 			}
 			//Multicast:
-			User sender=getUser(message[2]);
 			if(!socket.equals(sender.getSocket())){
 				//TODO: Ignore Messages that are not coming from the shortest path to sender when flooding
 				return;
@@ -143,7 +146,7 @@ public class DNChat implements DNChatInterface {
 	 * @param msg
 	 */
 	synchronized private void unicastMsg(User receiver, String msg){
-		if(receiver.getHopCount()>0){
+		if(receiver.isServer()){
 			receiver.getSocket().sendTextAsClient(msg);
 		}else{
 			receiver.getSocket().sendText(msg);
@@ -175,6 +178,16 @@ public class DNChat implements DNChatInterface {
 		for(User u: clients.values()){
 			if(!u.getSocket().equals(s) && u.isServer()){
 				u.getSocket().sendTextAsClient(msg);
+			}
+		}
+	}
+	/**
+	 * Sends the message to the next hop (possibly receiver itself) of the receiver
+	 */
+	synchronized private void sendToNextHopServer(User receiver, String s){
+		if(receiver!=null){
+			if(clients.containsKey(receiver.getSocket().getID())){
+				unicastMsg(clients.get(receiver.getSocket().getID()), s);
 			}
 		}
 	}
@@ -285,12 +298,7 @@ public class DNChat implements DNChatInterface {
 			} else {
 				User receiver=getUser(message[1]);
 				//Send the message to the next hop of receiver (possibly receiver himself)
-				if(receiver!=null){
-					if(clients.containsKey(receiver.getSocket().getID())){
-						unicastMsg(clients.get(receiver.getSocket().getID()), s);
-						break switchCase;
-					}
-				}
+				sendToNextHopServer(receiver,s);
 				// No receiver with given userId found. Send FAIL msg to sender.
 				output = "FAIL " + String.format("%.0f", msgNr) + "\r\n" + "NUMBER";
 				socket.sendText(output);
@@ -318,7 +326,7 @@ public class DNChat implements DNChatInterface {
 				output = "ACKN " + head[1] + "\r\n" + String.format("%.0f", usr.getChatId())+"\r\n"+ String.valueOf(sender.getChatId());
 			}
 			// inform other user.
-			unicastMsg(sender, output);
+			sendToNextHopServer(sender,output);
 			break;
 		
 		case "SRVR":
