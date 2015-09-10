@@ -41,7 +41,7 @@ public class WebsocketThread extends Thread {
 			while(line!=null && !line.isEmpty()){
 				line=readIn.readLine();
 			}
-			Websocket websocket=new Websocket(in, new DataOutputStream(socket.getOutputStream()));
+			Websocket websocket=new Websocket(in, new DataOutputStream(socket.getOutputStream()), socket);
 			websocket.sendTextAsClient("SRVR 0");
 			Lobby.dnChat.setServer(websocket);
 			websocket.doYourJob();

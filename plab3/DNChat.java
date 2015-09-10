@@ -51,7 +51,7 @@ public class DNChat implements DNChatInterface {
 	 */
 	public DNChat(){
 		clients = new ConcurrentHashMap<Integer, User>();
-		new ArrivePropagationThread().start();
+		//new ArrivePropagationThread().start();
 	}
 	
 	/**
@@ -143,6 +143,21 @@ public class DNChat implements DNChatInterface {
 			User receiver=getUser(message[2]);
 			sendToNextHopServer(receiver,msg);
 			break;
+		case "LEFT":
+			/**
+			 * Remove only farUsers. Direct connected Users and Servers are removed through call of removeClient
+			 */
+			User lostUser=null;
+			for(Iterator<User>iterator=farUsers.iterator(); iterator.hasNext();){
+				User u = (User) iterator.next();
+				if(u.getChatId()==Double.parseDouble(head[1])) {
+					lostUser=u;
+				}
+			}
+			if(lostUser==null){
+				return;
+			}
+			removeUser(lostUser, usr);
 		}
 	}
 	/**
@@ -414,11 +429,32 @@ public class DNChat implements DNChatInterface {
 	@Override
 	synchronized public void removeClient(Websocket socket) {
 		User leftUser = clients.remove(socket.getID());
+		if(leftUser.getChatId()!=-1){
+			String s = "LEFT " + String.format("%.0f", leftUser.getChatId());
+			for (Iterator<User> iterator = clients.values().iterator(); iterator.hasNext();) {
+				User u = (User) iterator.next();
+				sendToNextHopServer(u,s);
+			}
+		}else{
+			for(Iterator<User> iterator=farUsers.iterator(); iterator.hasNext(); ){
+				User lostUser=(User) iterator.next();
+				if(clients.get(lostUser)==leftUser){
+					removeUser(lostUser, null);
+				}
+				
+			}
+		}
 		socket.doClose.set(true);
-		String s = "LEFT " + String.format("%.0f", leftUser.getChatId());
-		for (Iterator<User> iterator = clients.values().iterator(); iterator.hasNext();) {
-			User u = (User) iterator.next();
-			u.getSocket().sendText(s);
+	}
+	
+	synchronized public void removeUser(User lostUser, User informingUser){
+		farUsers.remove(lostUser);
+		String s = "LEFT " + String.format("%.0f", lostUser.getChatId());
+		for (Iterator<User> iterator2 = clients.values().iterator(); iterator2.hasNext();) {
+			User u = (User) iterator2.next();
+			if(!u.equals(informingUser)){
+				sendToNextHopServer(u,s);
+			}
 		}
 	}
 

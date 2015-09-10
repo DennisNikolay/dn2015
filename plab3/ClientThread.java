@@ -115,7 +115,7 @@ public class ClientThread extends Thread {
 						"Connection: Upgrade \r\n" +
 						"Sec-WebSocket-Accept: " + Base64.encode(md.digest(s.getBytes()))
 						+"\r\n\r\n");
-				Websocket webSocket=new Websocket(in, out);
+				Websocket webSocket=new Websocket(in, out, socket);
 				try {
 					webSocket.doYourJob();
 					doAgain=false;

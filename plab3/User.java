@@ -117,9 +117,9 @@ public class User {
 	
 	public void setServer(boolean b){
 		isServer=b;
-		if(isServer){
-			ArrivePropagationThread.propagateArrival();
-		}
+		//if(isServer){
+		//	ArrivePropagationThread.propagateArrival();
+		//}
 	}
 	
 	synchronized public boolean isServer(){

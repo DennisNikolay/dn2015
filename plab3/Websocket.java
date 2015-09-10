@@ -39,6 +39,7 @@ public class Websocket {
 	private DataInputStream in;
 	private int ID;
 	private static int idCounter=0;
+	private Socket connection;
 	/**
 	 * Edited by 1 DNChat Object, Read by 1 this (concurrently)
 	 */
@@ -55,17 +56,18 @@ public class Websocket {
 	 * @param inStream
 	 * @param outStream
 	 */
-	public Websocket(DataInputStream inStream, DataOutputStream outStream){
+	public Websocket(DataInputStream inStream, DataOutputStream outStream, Socket connection){
 		readyState=State.OPEN;
 		in=inStream;
 		out=outStream;
 		ID=idCounter;
 		idCounter++;
+		this.connection=connection;
 		Lobby.dnChat.addClient(this);	
 	}
 	
-	public Websocket(DataInputStream inStream, DataOutputStream outStream, boolean isServer){
-		this(inStream, outStream);
+	public Websocket(DataInputStream inStream, DataOutputStream outStream, Socket connection, boolean isServer){
+		this(inStream, outStream, connection);
 		if(isServer){
 			Lobby.dnChat.setServer(this);	
 		}
@@ -291,10 +293,13 @@ public class Websocket {
 		}
 		try {
 			//System.out.println(new String(msg));
-			out.write(msg, 0, msg.length);
+			if(!connection.isClosed() && !connection.isOutputShutdown()){
+				out.write(msg, 0, msg.length);
+			}else{
+				Lobby.dnChat.removeClient(this);
+			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Lobby.dnChat.removeClient(this);
 		}
 	}
 	
@@ -345,10 +350,14 @@ public class Websocket {
 		}
 		try {
 			//System.out.println(new String(msg));
-			out.write(msg, 0, msg.length);
+			if(!connection.isClosed() && !connection.isOutputShutdown() && connection.isConnected()){
+				out.write(msg, 0, msg.length);
+			}else{
+				Lobby.dnChat.removeClient(this);
+			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Lobby.dnChat.removeClient(this);
+
 		}
 	}
 	
