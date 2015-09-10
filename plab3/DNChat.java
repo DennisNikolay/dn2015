@@ -129,6 +129,8 @@ public class DNChat implements DNChatInterface {
 				arriving.setId(userId);
 				farUsers.add(arriving);
 				//Send Message to all sockets, except the one the message was received from
+				message[3]=String.valueOf(hopCount);
+				msg=message[0]+"\r\n"+message[1]+"\r\n"+message[2]+"\r\n"+message[3]+"\r\n";
 				propagateMsgToClients(msg);
 				propagateMsgToServers(msg, socket);
 			}
