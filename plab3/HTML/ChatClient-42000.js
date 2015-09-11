@@ -60,6 +60,7 @@ function loginButtonPressed()
 	
 }
 
+
 // Called when the client should be listening for server replies.
 function onMessage(){
 	socket.onmessage=(function(evt){
@@ -122,7 +123,7 @@ function onMessage(){
 							
 						case "SEND":
 							// Incoming message is shown on the chat client.
-							addChatMessage(head[1], findUserName(msg[2]), msg[3], false);
+							addChatMessage(head[1], findUserName(msg[1]), msg[2], false);
 							// Acknowledgement is sent to the server to notify user that the message was read.
 							socket.send("ACKN "+ head[1]);
 							break;
@@ -145,6 +146,7 @@ function onMessage(){
 
 					});
 }
+
 
 // Called when the "Send" button is pressed
 function sendButtonPressed()

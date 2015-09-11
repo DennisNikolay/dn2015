@@ -338,14 +338,18 @@ public class DNChat implements DNChatInterface {
 			}
 			// ... and send message to receiver(s)
 			String s = "SEND " +  msgNr + "\r\n"+ message[1]+ "\r\n" + usr.getChatId() + "\r\n" + message[2];
+			String sClient="SEND "+msgNr+"\r\n"+message[1]+"\r\n"+message[2];
 			// to all currently logged in users
 			if (message[1].equals("*")) {
-				propagateMsgToClients(s, usr);
+				propagateMsgToClients(sClient, usr);
 				propagateMsgToServers(s, null);
 			} else {
 				User receiver=getUser(message[1]);
 				//Send the message to the next hop of receiver (possibly receiver himself)
 				if(receiver!=null){
+					if(!clients.get(receiver.getSocket().getID()).isServer()){
+						s=sClient;
+					}
 					sendToNextHopServer(receiver,s);
 				}else{
 					// No receiver with given userId found. Send FAIL msg to sender.
