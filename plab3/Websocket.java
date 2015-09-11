@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.sql.Timestamp;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -79,7 +79,12 @@ public class Websocket {
 			}
 		};
 	}
-	
+	/**
+	 * Constructor as above plus additionally sets server status
+	 * @param inStream
+	 * @param outStream
+	 * @param isServer
+	 */
 	public Websocket(DataInputStream inStream, DataOutputStream outStream, boolean isServer){
 		this(inStream, outStream);
 		if(isServer){
@@ -245,7 +250,7 @@ public class Websocket {
 	
 	/**
 	 * Parses a message to a WebsocketMessage object, does not handle message.
-	 * Closes connection, if a) message is fragmented or b) message is not masked
+	 * Closes connection, if a) message is fragmented or b) message is masked
 	 * @return
 	 */
 	public WebsocketMessage getMessageAsClient(){
@@ -368,7 +373,10 @@ public class Websocket {
 		System.out.println("SENT TO CLIENT: "+content);
 		sendMessage(content, 1);
 	}
-	
+	/**
+	 * Sends the content masked to a server
+	 * @param content
+	 */
 	public void sendTextAsClient(String content){
 		System.out.println("SENT TO SERVER: "+content);
 		sendMessageAsClient(content, 1);
@@ -396,7 +404,6 @@ public class Websocket {
 			payload[1]=rest[2];
 			payload[2]=rest[3];
 		}else{
-			//TODO: Bug here!
 			payload=new byte[5];
 			payload[0]=(byte) 127;
 			ByteBuffer buf=ByteBuffer.allocate(4);
@@ -422,11 +429,14 @@ public class Websocket {
 			}
 			out.write(msg, 0, msg.length);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			connectionIsDead();
 		}
 	}
-	
+	/**
+	 * Sends a masked Message
+	 * @param content
+	 * @param opcode
+	 */
 	private void sendMessageAsClient(String content, int opcode){
 		byte[] data=content.getBytes();
 		byte first=(byte) (((byte)0b10000000)|(byte)opcode);
@@ -478,11 +488,13 @@ public class Websocket {
 			}
 			out.write(msg, 0, msg.length);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			connectionIsDead();
 		}
 	}
-	
+	/**
+	 * Checks if the connection to a server is still alive and if not does the necessary things
+	 * @return
+	 */
 	private boolean connectionIsDead(){
 		if(lastPong != null && new Date().getTime()-this.lastPong.getTime()>1000*TIMEOUT_SEC){
 			Lobby.dnChat.reportServerDown(this);
@@ -491,7 +503,12 @@ public class Websocket {
 		}
 		return false;
 	}
-	
+	/**
+	 * encodes/decodes byte to the mask
+	 * @param toEncode
+	 * @param maskingKey
+	 * @return
+	 */
 	private byte[] getEncodedBytes(byte[] toEncode, byte[] maskingKey){
 		byte[] encoded=new byte[toEncode.length];
 		for (int i=0; i < toEncode.length; i++) {
@@ -514,7 +531,10 @@ public class Websocket {
 			sendMessage(msg.getDecodedData(), 10);
 		}
 	}
-
+	/**
+	 * sets the last pong flag
+	 * @param msg
+	 */
 	private void handlePong(WebsocketMessage msg){
 		if(msg.getType()!=WebsocketMessage.MessageType.PONG){
 			throw new IllegalArgumentException();
@@ -526,7 +546,9 @@ public class Websocket {
 		}
 		lastPong=new Date();
 	}
-	
+	/**
+	 * Sends a ping message
+	 */
 	private void sendPing(){
 		if(shouldMask){
 			sendMessageAsClient("PING", 9);
@@ -555,8 +577,26 @@ public class Websocket {
 		this.stopToPing();
 		readyState=State.CLOSING;
 		if(shouldMask){
+			for (Iterator<User> iterator = Lobby.dnChat.getUsers().values().iterator(); iterator.hasNext();) {
+				User u = (User) iterator.next();
+				if(!u.isServer())
+					sendTextAsClient("LEFT "+u.getChatId());				
+			}
+			for (Iterator<User> iterator = Lobby.dnChat.getFarUsers().iterator(); iterator.hasNext();) {
+				User u = (User) iterator.next();
+				sendTextAsClient("LEFT "+u.getChatId());						
+			}
 			sendMessageAsClient(String.valueOf(reason), 8);
 		}else{
+			for (Iterator<User> iterator = Lobby.dnChat.getUsers().values().iterator(); iterator.hasNext();) {
+				User u = (User) iterator.next();
+				if(!u.isServer())
+					sendText("LEFT "+u.getChatId());				
+			}
+			for (Iterator<User> iterator = Lobby.dnChat.getFarUsers().iterator(); iterator.hasNext();) {
+				User u = (User) iterator.next();
+				sendText("LEFT "+u.getChatId());						
+			}
 			sendMessage(String.valueOf(reason),8);
 		}
 	}
@@ -584,21 +624,31 @@ public class Websocket {
 	public String toString() {
 		return "Websocket [ID=" + ID + "]";
 	}
-
+	/**
+	 * Starts to ping regulary
+	 */
 	public void startToPing(){
 		pingThread.start();
 	}
-	
+	/**
+	 * stops the regular pings (called if connection is dead)
+	 */
 	public void stopToPing(){
 		if(pingThread.isAlive()){
 			pingThread.interrupt();
 		}
 	}
-	
+	/**
+	 * says if this server should send masked messages over this connection
+	 * @return
+	 */
 	public boolean shouldMask(){
 		return shouldMask;
 	}
-	
+	/**
+	 * sets the mask
+	 * @param b
+	 */
 	public void setMask(boolean b){
 		shouldMask=b;
 	}

@@ -79,8 +79,6 @@ public class DNChat implements DNChatInterface {
 	synchronized public void pushMessageServer(Websocket socket, String msg){
 		String[] message = msg.split("\r\n");
 		String[] head = message[0].split(" ");
-		String output = "";
-		User usr = clients.get(socket.getID());
 		
 		switch(head[0]){
 		case "SEND":
@@ -203,7 +201,7 @@ public class DNChat implements DNChatInterface {
 	 */
 	synchronized private void propagateMsgToClients(String msg, User not){
 		for(User u: clients.values()){
-			if(!u.isServer() && u.getHopCount()==0 && !u.equals(not)){
+			if(!u.isServer() && !u.equals(not)){
 				u.getSocket().sendText(msg);
 			}
 		}
@@ -277,7 +275,7 @@ public class DNChat implements DNChatInterface {
 			 return;
 		}
 		
-		switchCase: switch (head[0]) {
+		switch (head[0]) {
 		
 		// Authentication request
 		case "AUTH":
@@ -301,16 +299,6 @@ public class DNChat implements DNChatInterface {
 				 String s = "ARRV " + userId + "\r\n" +  usr.getChatName() + "\r\n" +  usr.getChatDescription()+"\r\n"+"0";
 				 propagateMsgToClients(s, usr);
 				 propagateMsgToServers(s, null);
-				 for(User u: clients.values()){
-					 String s2 = "ARRV " + u.getChatId() + "\r\n" +  u.getChatName() + "\r\n" +  u.getChatDescription()+"\r\n"+u.getHopCount();
-					 if(!u.isServer()){
-						 unicastMsg(usr,s2);
-					 }
-				 }
-				 for(User u: farUsers){
-					 String s2 = "ARRV " +  u.getChatId() + "\r\n" +  u.getChatName() + "\r\n" +  u.getChatDescription()+"\r\n"+u.getHopCount();
-					 unicastMsg(usr,s2);
-				 }
 			}
 			break;
 
@@ -351,7 +339,7 @@ public class DNChat implements DNChatInterface {
 					sendToNextHopServer(receiver,s);
 				}else{
 					// No receiver with given userId found. Send FAIL msg to sender.
-					output = "FAIL " + String.format("%.0f", msgNr) + "\r\n" + "NUMBER";
+					output = "FAIL " + msgNr + "\r\n" + "NUMBER";
 					socket.sendText(output);	
 				}
 				break;
@@ -370,7 +358,7 @@ public class DNChat implements DNChatInterface {
 			User sender=getSender(msgId);
 			if(sender==null){
 				// msg does not exit. send FAIL message back to sender.
-				output = "FAIL " + String.format("%.0f", msgId) + "\r\n" + "NUMBER";
+				output = "FAIL " + msgId + "\r\n" + "NUMBER";
 				socket.sendText(output);
 				break;
 			} else {
@@ -479,14 +467,31 @@ public class DNChat implements DNChatInterface {
 	 * @param id, name, pw, socket
 	 * @return true if user id, pw and name is okay, false otherwise.
 	 */
-	synchronized private boolean checkLoginData(double id, String name, String pw, Websocket socket) {		
-		String failMsg = "FAIL " + String.format("%.0f", id) + "\r\n";
+	synchronized private boolean checkLoginData(long id, String name, String pw, Websocket socket) {		
+		String failMsg = "FAIL " +  id + "\r\n";
 		if (!pw.equals(this.pw)) {
 			failMsg += "PASSWORD";
 			socket.sendText(failMsg);
 			return false;
 		}
 		for (Iterator<User> iterator = clients.values().iterator(); iterator.hasNext();) {
+			User u = (User) iterator.next();
+			if(u.isServer()){
+				continue;
+			}
+			if (u.getChatId() == id) {
+				failMsg += "NUMBER";
+				socket.sendText(failMsg);
+				return false;
+			}
+			if (name.equals("") || u.getChatName().equals(name)) {
+				failMsg += "NAME";
+				socket.sendText(failMsg);
+				return false;
+			}
+			
+		}
+		for (Iterator<User> iterator = farUsers.iterator(); iterator.hasNext();) {
 			User u = (User) iterator.next();
 			
 			if (u.getChatId() == id) {
@@ -512,7 +517,10 @@ public class DNChat implements DNChatInterface {
 		return clients;
 	}
 	
-	
+	/**
+	 * Called when a server is down, removes the clients from that server
+	 * @param server
+	 */
 	synchronized public void reportServerDown(Websocket server){
 		for(Iterator<User> iter=farUsers.iterator(); iter.hasNext();){
 			User u=iter.next();

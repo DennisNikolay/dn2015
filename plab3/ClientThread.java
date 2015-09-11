@@ -40,7 +40,6 @@ public class ClientThread extends Thread {
 		out=outStream;
 		in=inReader;
 		this.socket=socket;
-		System.out.println("New Client");
 	}
 	/**
 	 * "Main" of ClientThread.
