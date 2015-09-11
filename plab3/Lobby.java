@@ -24,7 +24,7 @@ public class Lobby {
 	/**
 	 * The Standard port of the server
 	 */
-	private static int port=42015;
+	private static int port=42011;
 	/**
 	 * The Http-socket for handshakeing
 	 */
@@ -48,7 +48,7 @@ public class Lobby {
 				DataOutputStream out=new DataOutputStream(connection.getOutputStream());
 				new ClientThread(out, in, connection).start();
 			}
-		} catch (IOException e) {}	
+		} catch (IOException e) {e.printStackTrace();}	
 	}
 	/**
 	 * Reads the port of this server from the command line
@@ -65,7 +65,6 @@ public class Lobby {
 			}
 		}
 		port=d.nextInt();
-		d.close();
 	}
 
 }

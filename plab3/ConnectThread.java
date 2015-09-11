@@ -17,7 +17,6 @@ public class ConnectThread extends Thread {
 	 */
 	@Override
 	public void run(){
-		//FOR PL3
 		Scanner d=new Scanner(System.in);
 		d.useDelimiter("\n");
 		while(!this.isInterrupted()){
@@ -35,7 +34,9 @@ public class ConnectThread extends Thread {
 					Lobby.shouldTerminate.set(true);
 					try {
 						Lobby.httpSocket.close();
-					} catch (IOException e) {}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 					Thread.currentThread().interrupt();
 				}
 				if(b){
@@ -57,9 +58,8 @@ public class ConnectThread extends Thread {
 						e.printStackTrace();
 					}
 				}
-
 			}
 		}
-
+		d.close();
 	}
 }
