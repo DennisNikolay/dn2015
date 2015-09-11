@@ -111,7 +111,17 @@ public class DNChat implements DNChatInterface {
 		case "ARRV":
 			int hopCount=Integer.valueOf(message[3])+1;
 			if (hopCount>15){
-				propagateMsgToServers("LEFT "+head[1], null);
+				String s="LEFT "+head[1];
+				propagateMsgToServers(s, null);
+				if(clients.get(getUser(head[1]).getSocket().getID()).equals(socket)){
+					for(Iterator<User>iterator=farUsers.iterator(); iterator.hasNext();){
+						User u = (User) iterator.next();
+						if(u.getChatId()==Long.parseLong(head[1])) {
+							propagateMsgToClients(s, u);
+							iterator.remove();
+						}
+					}
+				}
 				return;
 			}
 			User arriving=getUser(head[1]);
@@ -376,7 +386,7 @@ public class DNChat implements DNChatInterface {
 				handleInvdMsg(socket);
 				break;
 			}
-			if(head[1].equals(String.valueOf(0))){
+			if(!head[1].equals(String.valueOf(0))){
 				usr.setServer(true);
 				usr.getSocket().setMask(false);
 				usr.setHopCount(1);
