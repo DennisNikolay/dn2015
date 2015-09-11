@@ -299,6 +299,16 @@ public class DNChat implements DNChatInterface {
 				 String s = "ARRV " + userId + "\r\n" +  usr.getChatName() + "\r\n" +  usr.getChatDescription()+"\r\n"+"0";
 				 propagateMsgToClients(s, usr);
 				 propagateMsgToServers(s, null);
+				 for(User u: clients.values()){
+					 String s2 = "ARRV " + u.getChatId() + "\r\n" +  u.getChatName() + "\r\n" +  u.getChatDescription()+"\r\n"+u.getHopCount();
+					 if(!u.isServer() && !u.getSocket().equals(usr.getSocket())){
+						 unicastMsg(usr,s2);
+					 }
+				 }
+				 for(User u: farUsers){
+					 String s2 = "ARRV " +  u.getChatId() + "\r\n" +  u.getChatName() + "\r\n" +  u.getChatDescription()+"\r\n"+u.getHopCount();
+					 unicastMsg(usr,s2);
+				 }
 			}
 			break;
 
