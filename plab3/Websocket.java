@@ -429,6 +429,7 @@ public class Websocket {
 			}
 			out.write(msg, 0, msg.length);
 		} catch (IOException e) {
+			e.printStackTrace();
 			connectionIsDead();
 		}
 	}
@@ -488,6 +489,7 @@ public class Websocket {
 			}
 			out.write(msg, 0, msg.length);
 		} catch (IOException e) {
+			e.printStackTrace();
 			connectionIsDead();
 		}
 	}
@@ -575,7 +577,6 @@ public class Websocket {
 	 */
 	private void closeConnection(int reason){
 		this.stopToPing();
-		readyState=State.CLOSING;
 		if(shouldMask){
 			for (Iterator<User> iterator = Lobby.dnChat.getUsers().values().iterator(); iterator.hasNext();) {
 				User u = (User) iterator.next();
@@ -599,6 +600,8 @@ public class Websocket {
 			}
 			sendMessage(String.valueOf(reason),8);
 		}
+		readyState=State.CLOSING;
+
 	}
 	/**
 	 * helper method to get opcode out of byte from message

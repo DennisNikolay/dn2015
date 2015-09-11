@@ -542,6 +542,9 @@ public class DNChat implements DNChatInterface {
 	 * @param server
 	 */
 	synchronized public void reportServerDown(Websocket server){
+		if(!clients.get(server.getID()).isServer()){
+			return;
+		}
 		for(Iterator<User> iter=farUsers.iterator(); iter.hasNext();){
 			User u=iter.next();
 			if(u.getSocket().equals(server)){
