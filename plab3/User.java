@@ -41,7 +41,7 @@ public class User {
 	/**
 	 * A list containing all messages which had been sent by the user.
 	 */
-	private LinkedList<Double> messagesSent;
+	private LinkedList<Long> messagesSent;
 	
 	private boolean isServer;
 	private int hopCount;
@@ -49,14 +49,14 @@ public class User {
 	public User(Websocket socket) {
 		this.socket = socket;
 		state = State.connected;
-		messagesSent = new LinkedList<Double>();
+		messagesSent = new LinkedList<Long>();
 		isServer=false;
 		hopCount=0;
 	}
 	public User(Websocket socket, boolean server, int hops) {
 		this.socket = socket;
 		state = State.connected;
-		messagesSent = new LinkedList<Double>();
+		messagesSent = new LinkedList<Long>();
 		setServer(server);
 		hopCount=hops;
 	}
@@ -101,11 +101,11 @@ public class User {
 		return chatDescription;
 	}
 
-	synchronized public LinkedList<Double> getMessagesSent() {
+	synchronized public LinkedList<Long> getMessagesSent() {
 		return messagesSent;
 	}
 
-	synchronized public void addMsg(Double m) {
+	synchronized public void addMsg(Long m) {
 		messagesSent.add(m);
 	}
 

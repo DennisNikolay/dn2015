@@ -85,7 +85,7 @@ public class DNChat implements DNChatInterface {
 		switch(head[0]){
 		case "SEND":
 			User sender=getUser(message[2]);
-			Double msgNr = Double.parseDouble(head[1]);
+			Long msgNr = Long.parseLong(head[1]);
 			sender.addMsg(msgNr);
 			//Does not have to check conditions in messages, as they are already checked by the server, directly connected to the user
 			if(!message[1].equals("*")){
@@ -122,7 +122,7 @@ public class DNChat implements DNChatInterface {
 					arriving.setSocket(socket);
 					//Propagate new HopCount to all Servers, except the one the message was received from
 					message[3]=String.valueOf(hopCount);
-					msg=message[0]+"\r\n"+message[1]+"\r\n"+message[2]+"\r\n"+message[3]+"\r\n";
+					msg=message[0]+"\r\n"+message[1]+"\r\n"+message[2]+"\r\n"+message[3];
 					propagateMsgToServers(msg, socket);
 				}
 			}else{
@@ -137,7 +137,7 @@ public class DNChat implements DNChatInterface {
 				farUsers.add(arriving);
 				//Send Message to all sockets, except the one the message was received from
 				message[3]=String.valueOf(hopCount);
-				msg=message[0]+"\r\n"+message[1]+"\r\n"+message[2]+"\r\n"+message[3]+"\r\n";
+				msg=message[0]+"\r\n"+message[1]+"\r\n"+message[2]+"\r\n"+message[3];
 				propagateMsgToClients(msg);
 				propagateMsgToServers(msg, socket);
 			}
@@ -309,26 +309,26 @@ public class DNChat implements DNChatInterface {
 				handleInvdMsg(socket);
 				break;
 			}
-			Double msgNr = Double.parseDouble(head[1]);
+			Long msgNr = Long.parseLong(head[1]);
 			// TODO text size
 			if (message[2].length() > maxMsgLength) {
-				output = "FAIL " + String.format("%.0f", msgNr) + "\r\n" + "LENGTH";
+				output = "FAIL " +  msgNr + "\r\n" + "LENGTH";
 				socket.sendText(output);
 				break;
 			}
 			// check whether msg id redundant or not.
 			if (!checkMsg(msgNr)) {
-				output = "FAIL " + String.format("%.0f", msgNr) + "\r\n" + "NUMBER";
+				output = "FAIL " + msgNr + "\r\n" + "NUMBER";
 				socket.sendText(output);
 				break;
 			} else {
 				// everything ok. add msg and notify sender...
 				usr.addMsg(msgNr);
-				output = "OKAY " + String.format("%.0f", msgNr);
+				output = "OKAY " + msgNr;
 				socket.sendText(output);
 			}
 			// ... and send message to receiver(s)
-			String s = "SEND " + String.format("%.0f", msgNr) + "\r\n"+ message[1]+ "\r\n" + usr.getChatId() + "\r\n" + message[2];
+			String s = "SEND " +  msgNr + "\r\n"+ message[1]+ "\r\n" + usr.getChatId() + "\r\n" + message[2];
 			// to all currently logged in users
 			if (message[1].equals("*")) {
 				propagateMsgToClients(s, usr);
@@ -355,7 +355,7 @@ public class DNChat implements DNChatInterface {
 				break;
 			}
 			//Check if msgId was sent before/exists.
-			Double msgId = Double.parseDouble(head[1]);
+			Long msgId = Long.parseLong(head[1]);
 			User sender=getSender(msgId);
 			if(sender==null){
 				// msg does not exit. send FAIL message back to sender.
@@ -396,7 +396,7 @@ public class DNChat implements DNChatInterface {
  * @param msgId
  * @return
  */
-	synchronized private User getSender(Double msgId) {
+	synchronized private User getSender(Long msgId) {
 		for (Iterator<User> iterator = clients.values().iterator(); iterator.hasNext();) {
 			User u = (User) iterator.next();
 			if(u.getMessagesSent().contains(msgId)) {
@@ -417,7 +417,7 @@ public class DNChat implements DNChatInterface {
 	 * @param msgNr
 	 * @return true if not used before, false otherwise.
 	 */
-	synchronized private boolean checkMsg(Double msgNr) {
+	synchronized private boolean checkMsg(Long msgNr) {
 		for (Iterator<User> iterator = clients.values().iterator(); iterator.hasNext();) {
 			User u = (User) iterator.next();
 			if (u.getMessagesSent().contains(msgNr)) {
