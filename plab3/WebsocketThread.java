@@ -42,9 +42,9 @@ public class WebsocketThread extends Thread {
 				line=readIn.readLine();
 			}
 			Websocket websocket=new Websocket(in, new DataOutputStream(socket.getOutputStream()));
+			websocket.setMask(true);
 			websocket.sendTextAsClient("SRVR 0");
 			Lobby.dnChat.setServer(websocket);
-			websocket.setMask(true);
 			websocket.doYourJob();
 			socket.close();
 		} catch (IOException | OperationNotSupportedException e) {

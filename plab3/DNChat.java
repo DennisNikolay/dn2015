@@ -170,7 +170,11 @@ public class DNChat implements DNChatInterface {
 	 */
 	synchronized private void unicastMsg(User receiver, String msg){
 		if(receiver.isServer()){
-			receiver.getSocket().sendTextAsClient(msg);
+			if(receiver.getSocket().shouldMask()){
+				receiver.getSocket().sendTextAsClient(msg);
+			}else{
+				receiver.getSocket().sendText(msg);
+			}
 		}else{
 			receiver.getSocket().sendText(msg);
 		}
@@ -200,7 +204,11 @@ public class DNChat implements DNChatInterface {
 	synchronized private void propagateMsgToServers(String msg, Websocket s){
 		for(User u: clients.values()){
 			if(!u.getSocket().equals(s) && u.isServer()){
-				u.getSocket().sendTextAsClient(msg);
+				if(u.getSocket().shouldMask()){
+					u.getSocket().sendTextAsClient(msg);
+				}else{
+					u.getSocket().sendText(msg);
+				}
 			}
 		}
 	}

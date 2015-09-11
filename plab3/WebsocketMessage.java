@@ -106,6 +106,7 @@ public class WebsocketMessage {
 			try {
 				bytes[mod4]=payloadData.readByte();
 				if(mod4==3){
+					bytes=getDecodedBytes(bytes);
 					result+=new String(bytes, "UTF-8");
 					bytes=new byte[4];
 				}
@@ -121,7 +122,7 @@ public class WebsocketMessage {
 				bytes2[payloadSizeMod4-i]=bytes[payloadSizeMod4-i];
 			}
 			try {
-				result+=new String(bytes2, "UTF-8");
+				result+=new String(getDecodedBytes(bytes2), "UTF-8");
 			} catch (UnsupportedEncodingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

@@ -41,7 +41,7 @@ public class Websocket {
 	private Thread pingThread;
 	private final double TIMEOUT_SEC=0.5;
 	private final double TIME_SLEEP_SEC=0.2;
-	private boolean shouldMask;
+	private boolean shouldMask=false;
 	
 	/**
 	 * Edited by 1 DNChat Object, Read by 1 this (concurrently)
@@ -97,10 +97,19 @@ public class Websocket {
 		while(readyState==State.OPEN){
 			try {
 				if(in.available()>0){
-					WebsocketMessage msg=getMessage();
+					WebsocketMessage msg=null;
+					if(shouldMask){
+						msg=getMessageAsClient();
+					}else{
+						msg=getMessage();
+					}
 					switch(msg.getType()){
 					case TEXT:
-						Lobby.dnChat.pushMessage(this, msg.getDecodedData());
+						if(shouldMask){
+							Lobby.dnChat.pushMessage(this, msg.getData());
+						}else{
+							Lobby.dnChat.pushMessage(this, msg.getDecodedData());
+						}
 						break;
 					case PING:
 						handlePing(msg);
@@ -233,6 +242,105 @@ public class Websocket {
 		}
 		
 	}
+	
+	/**
+	 * Parses a message to a WebsocketMessage object, does not handle message.
+	 * Closes connection, if a) message is fragmented or b) message is not masked
+	 * @return
+	 */
+	public WebsocketMessage getMessageAsClient(){
+		try {
+			Byte b=in.readByte();
+			WebsocketMessage.MessageType type=WebsocketMessage.MessageType.ELSE;
+			int payloadSize1=0;
+			int payloadSize2=0;
+			BigInteger payloadSize3=BigInteger.ZERO;
+			//Command Type
+			byte opcode=getOpcode(b);
+			if(!isSetBit(b,7) || (0x0)==opcode){
+				//TODO: Close Connection and give response because fragmented Websocket message
+				//TODO: check reason for error.
+				closeConnection(0);
+			}
+			if(((byte)0x1)==opcode){
+				type=WebsocketMessage.MessageType.TEXT;
+			}
+			if(((byte)0x2)==opcode){
+				type=WebsocketMessage.MessageType.BINARY;
+			}
+			if(((byte)0x8)==opcode){
+				type=WebsocketMessage.MessageType.CLOSE;
+			}
+			if(((byte)0x9)==opcode){
+				type=WebsocketMessage.MessageType.PING;			
+			}
+			if(((byte)0xA)==opcode){
+				type=WebsocketMessage.MessageType.PONG;				
+			}
+			b=in.readByte();
+			if(isSetBit(b, 7)){
+				//TODO: Check reason.
+				closeConnection(0);
+			}
+			//Read in payloadSize
+			
+			
+
+			
+			
+			payloadSize1=Integer.valueOf(b);
+
+
+			byte[] bytes=new byte[4];
+
+			if(payloadSize1==126){
+				b=in.readByte();
+				byte b2=in.readByte();
+				bytes[0]=0;
+				bytes[1]=0;
+				bytes[2]=b;
+				bytes[3]=b2;
+			}
+			
+			payloadSize2=new BigInteger(bytes).intValue();
+			
+			bytes=new byte[9];
+			byte b2, b3, b4;
+			if(payloadSize1==127){
+				//bytes=new byte[9];
+				b=in.readByte();
+				b2=in.readByte();
+				b3=in.readByte();
+				b4=in.readByte();
+				bytes[0]=0; //No Sign
+				bytes[1]=b;
+				bytes[2]=b2;
+				bytes[3]=b3;
+				bytes[4]=b4;
+				b=in.readByte();
+				b2=in.readByte();
+				b3=in.readByte();
+				b4=in.readByte();
+				bytes[5]=b;
+				bytes[6]=b2;
+				bytes[7]=b3;
+				bytes[8]=b4;
+			}
+
+			payloadSize3=new BigInteger(bytes);
+			
+				//Convert 2 Bytes to short
+			WebsocketMessage msg=new WebsocketMessage(type, payloadSize1, payloadSize2, payloadSize3, bytes, in);
+			return msg;
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+		
+	}
+	
 	
 	/*
 	 * HELPER METHOD
@@ -400,19 +508,31 @@ public class Websocket {
 		if(msg.getType()!=WebsocketMessage.MessageType.PING){
 			throw new IllegalArgumentException();
 		}
-		sendMessageAsClient(msg.getData(), 10);
+		if(shouldMask){
+			sendMessageAsClient(msg.getData(), 10);
+		}else{
+			sendMessage(msg.getDecodedData(), 10);
+		}
 	}
 
 	private void handlePong(WebsocketMessage msg){
 		if(msg.getType()!=WebsocketMessage.MessageType.PONG){
 			throw new IllegalArgumentException();
 		}
-		msg.getData();
+		if(shouldMask){
+			msg.getData();
+		}else{
+			msg.getDecodedData();
+		}
 		lastPong=new Date();
 	}
 	
 	private void sendPing(){
-		sendMessageAsClient("PING", 9);
+		if(shouldMask){
+			sendMessageAsClient("PING", 9);
+		}else{
+			sendMessage("PING", 9);
+		}
 	}
 	
 	/**
@@ -434,7 +554,11 @@ public class Websocket {
 	private void closeConnection(int reason){
 		this.stopToPing();
 		readyState=State.CLOSING;
-		sendMessage(String.valueOf(reason),8);
+		if(shouldMask){
+			sendMessageAsClient(String.valueOf(reason), 8);
+		}else{
+			sendMessage(String.valueOf(reason),8);
+		}
 	}
 	/**
 	 * helper method to get opcode out of byte from message
