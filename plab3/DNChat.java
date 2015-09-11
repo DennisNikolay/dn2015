@@ -111,6 +111,7 @@ public class DNChat implements DNChatInterface {
 		case "ARRV":
 			int hopCount=Integer.valueOf(message[3])+1;
 			if (hopCount>15){
+				propagateMsgToServers("LEFT "+head[1], null);
 				return;
 			}
 			User arriving=getUser(head[1]);
