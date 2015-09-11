@@ -129,7 +129,7 @@ public class DNChat implements DNChatInterface {
 				//There is no connection to the User.
 				String descript=message[2];
 				arriving=new User(socket, false, hopCount);
-				double userId = Double.parseDouble(head[1]);
+				long userId = Long.parseLong(head[1]);
 				arriving.setState(User.State.authenticated);
 				arriving.setChatDescription(descript);
 				arriving.setChatName(message[1]);
@@ -158,7 +158,7 @@ public class DNChat implements DNChatInterface {
 			}else{
 				//TODO:THINK HERE COUNT TO INFINITY PROBLEM
 				//IDEA OF THIS LINE: "Oh you lost your connection to that user? Well I've got a connection to that user not running over you"
-				socket.sendTextAsClient("ARRV " + String.format("%.0f", left.getChatId()) + "\r\n" +  left.getChatName() + "\r\n" +  left.getChatDescription()+"\r\n"+left.getHopCount());
+				//socket.sendTextAsClient("ARRV " + left.getChatId() + "\r\n" +  left.getChatName() + "\r\n" +  left.getChatDescription()+"\r\n"+left.getHopCount());
 			}
 			break;
 		}
@@ -236,13 +236,13 @@ public class DNChat implements DNChatInterface {
 	 */
 	synchronized private User getUser(String nr){
 		for(User u : clients.values()){
-			if(u.getChatId()==Double.parseDouble(nr)){
+			if(u.getChatId()==Long.parseLong(nr)){
 				return u;
 			}
 		}
 		for(Iterator<User>iterator=farUsers.iterator(); iterator.hasNext();){
 			User u = (User) iterator.next();
-			if(u.getChatId()==Double.parseDouble(nr)) {
+			if(u.getChatId()==Long.parseLong(nr)) {
 				return u;
 			}
 		}
@@ -275,7 +275,7 @@ public class DNChat implements DNChatInterface {
 				handleInvdMsg(socket);
 				break;
 			}
-			double userId = Double.parseDouble(head[1]);
+			long userId = Long.parseLong(head[1]);
 			// correct login data?
 			if (checkLoginData(userId, message[1], message[2], socket)) {
 				usr.setId(userId);
@@ -283,21 +283,21 @@ public class DNChat implements DNChatInterface {
 				usr.setChatDescription(description);
 				usr.setChatName(message[1]);
 				
-				output = "OKAY " + String.format("%.0f", userId);
+				output = "OKAY " +  userId;
 				socket.sendText(output);
 				
 				// ARRV messages sent here
-				 String s = "ARRV " + String.format("%.0f", userId) + "\r\n" +  usr.getChatName() + "\r\n" +  usr.getChatDescription()+"\r\n"+"0";
+				 String s = "ARRV " + userId + "\r\n" +  usr.getChatName() + "\r\n" +  usr.getChatDescription()+"\r\n"+"0";
 				 propagateMsgToClients(s, usr);
 				 propagateMsgToServers(s, null);
 				 for(User u: clients.values()){
-					 String s2 = "ARRV " + String.format("%.0f", u.getChatId()) + "\r\n" +  u.getChatName() + "\r\n" +  u.getChatDescription()+"\r\n"+u.getHopCount();
+					 String s2 = "ARRV " + u.getChatId() + "\r\n" +  u.getChatName() + "\r\n" +  u.getChatDescription()+"\r\n"+u.getHopCount();
 					 if(!u.isServer()){
 						 unicastMsg(usr,s2);
 					 }
 				 }
 				 for(User u: farUsers){
-					 String s2 = "ARRV " + String.format("%.0f", u.getChatId()) + "\r\n" +  u.getChatName() + "\r\n" +  u.getChatDescription()+"\r\n"+u.getHopCount();
+					 String s2 = "ARRV " +  u.getChatId() + "\r\n" +  u.getChatName() + "\r\n" +  u.getChatDescription()+"\r\n"+u.getHopCount();
 					 unicastMsg(usr,s2);
 				 }
 			}
@@ -328,7 +328,7 @@ public class DNChat implements DNChatInterface {
 				socket.sendText(output);
 			}
 			// ... and send message to receiver(s)
-			String s = "SEND " + String.format("%.0f", msgNr) + "\r\n"+ message[1]+ "\r\n" + String.format("%.0f", usr.getChatId()) + "\r\n" + message[2];
+			String s = "SEND " + String.format("%.0f", msgNr) + "\r\n"+ message[1]+ "\r\n" + usr.getChatId() + "\r\n" + message[2];
 			// to all currently logged in users
 			if (message[1].equals("*")) {
 				propagateMsgToClients(s, usr);
@@ -364,7 +364,7 @@ public class DNChat implements DNChatInterface {
 				break;
 			} else {
 				// message exists.
-				output = "ACKN " + head[1] + "\r\n" + String.format("%.0f", usr.getChatId())+"\r\n"+ String.valueOf(sender.getChatId());
+				output = "ACKN " + head[1] + "\r\n" + usr.getChatId()+"\r\n"+ String.valueOf(sender.getChatId());
 			}
 			// inform other user.
 			sendToNextHopServer(sender,output);
@@ -443,7 +443,7 @@ public class DNChat implements DNChatInterface {
 		User leftUser = clients.remove(socket.getID());
 		socket.doClose.set(true);
 		if(!leftUser.isServer()){
-			String s = "LEFT " + String.format("%.0f", leftUser.getChatId());
+			String s = "LEFT " + leftUser.getChatId();
 			for (Iterator<User> iterator = clients.values().iterator(); iterator.hasNext();) {
 				User u = (User) iterator.next();
 				unicastMsg(u, s);
@@ -506,7 +506,7 @@ public class DNChat implements DNChatInterface {
 		for(Iterator<User> iter=farUsers.iterator(); iter.hasNext();){
 			User u=iter.next();
 			if(u.getSocket().equals(server)){
-				String msg="LEFT " + String.format("%.0f", u.getChatId());
+				String msg="LEFT " + u.getChatId();
 				propagateMsgToServers(msg, server);
 				propagateMsgToClients(msg, null);
 				iter.remove();
@@ -515,5 +515,9 @@ public class DNChat implements DNChatInterface {
 		clients.remove(server.getID());
 		server.doClose.set(true);
 		System.out.println("Server Down!");
+	}
+	
+	synchronized public String getPassword(){
+		return pw;
 	}
 }

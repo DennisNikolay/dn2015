@@ -26,13 +26,13 @@ public class WebsocketThread extends Thread {
 			Random r=new Random();
 			byte[] bytes=new byte[16];
 			r.nextBytes(bytes);
-			String data="GET / HTTP/1.1\n" +
-					"Host: localhost:42015\n" +
-					"Sec-WebSocket-Version: 13\n" +
-					"Origin: null\n" +
-					"Sec-WebSocket-Key: " +Base64.encode(bytes)+"\n"+
-					"Connection: keep-alive, Upgrade\n" +
-					"Upgrade: websocket\n\n";
+			String data="GET / HTTP/1.1\r\n" +
+					"Host: localhost:42015\r\n" +
+					"Sec-WebSocket-Version: 13\r\n" +
+					"Origin: null\r\n" +
+					"Sec-WebSocket-Key: " +Base64.encode(bytes)+"\r\n"+
+					"Connection: keep-alive, Upgrade\r\n" +
+					"Upgrade: websocket\r\n\r\n";
 			DataOutputStream out=new DataOutputStream(socket.getOutputStream());
 			out.write(data.getBytes(StandardCharsets.UTF_8));
 			DataInputStream in=new DataInputStream(socket.getInputStream());
@@ -43,7 +43,8 @@ public class WebsocketThread extends Thread {
 			}
 			Websocket websocket=new Websocket(in, new DataOutputStream(socket.getOutputStream()));
 			websocket.setMask(true);
-			websocket.sendTextAsClient("SRVR 0");
+			String number=toSrvrNumber(Lobby.dnChat.getPassword());
+			websocket.sendTextAsClient("SRVR "+number);
 			Lobby.dnChat.setServer(websocket);
 			websocket.doYourJob();
 			socket.close();
@@ -54,4 +55,7 @@ public class WebsocketThread extends Thread {
 		
 	}
 
+	private String toSrvrNumber(String password) { 
+		return "63383060908028598";
+	}
 }

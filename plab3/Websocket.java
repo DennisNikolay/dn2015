@@ -39,8 +39,8 @@ public class Websocket {
 	private static int idCounter=0;
 	private Date lastPong;
 	private Thread pingThread;
-	private final double TIMEOUT_SEC=0.5;
-	private final double TIME_SLEEP_SEC=0.2;
+	private final double TIMEOUT_SEC=10;
+	private final double TIME_SLEEP_SEC=4;
 	private boolean shouldMask=false;
 	
 	/**

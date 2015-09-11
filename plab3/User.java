@@ -21,7 +21,7 @@ public class User {
 	/**
 	 * The user's unique chat id.
 	 */
-	private double chatId = -1;
+	private long chatId = -1;
 	
 	/**
 	 * The user's chat name.
@@ -69,7 +69,7 @@ public class User {
 		this.state = state;
 	}
 		
-	synchronized public void setId(double id) {
+	synchronized public void setId(long id) {
 		this.chatId = id;
 	}
 
@@ -93,7 +93,7 @@ public class User {
 		return chatName;
 	}
 	
-	synchronized public double getChatId() {
+	synchronized public long getChatId() {
 		return chatId;
 	}
 
