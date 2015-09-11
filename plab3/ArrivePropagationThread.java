@@ -21,7 +21,7 @@ public class ArrivePropagationThread extends Thread {
 	
 	public static void propagateArrival(){
 		for(User u:Lobby.dnChat.getUsers().values()){
-			if(!u.isServer()){
+			if(!u.isServer() && u.getChatId()!=-1){
 				String s="ARRV " + u.getChatId() + "\r\n" +  u.getChatName() + "\r\n" +  u.getChatDescription()+"\r\n"+u.getHopCount();
 				for(User server:Lobby.dnChat.getUsers().values()){
 					if(server.isServer()){

@@ -93,6 +93,9 @@ public class DNChat implements DNChatInterface {
 					//TODO: User with that number does not exsist
 					return;
 				}
+				if(!clients.get(receiver.getSocket().getID()).isServer()){
+					msg=message[0]+"\r\n"+sender.getChatId()+"\r\n"+message[3];
+				}
 				sendToNextHopServer(receiver, msg);
 				return;
 			}
@@ -101,8 +104,9 @@ public class DNChat implements DNChatInterface {
 				//TODO: Ignore Messages that are not coming from the shortest path to sender when flooding
 				return;
 			}
+			String msgClients=message[0]+"\r\n"+sender.getChatId()+"\r\n"+message[3];
 			//Send Message to all sockets, except the one the message was received from
-			propagateMsgToClients(msg);
+			propagateMsgToClients(msgClients);
 			propagateMsgToServers(msg, socket);
 
 			break;
@@ -301,13 +305,15 @@ public class DNChat implements DNChatInterface {
 				 propagateMsgToServers(s, null);
 				 for(User u: clients.values()){
 					 String s2 = "ARRV " + u.getChatId() + "\r\n" +  u.getChatName() + "\r\n" +  u.getChatDescription()+"\r\n"+u.getHopCount();
-					 if(!u.isServer() && !u.getSocket().equals(usr.getSocket())){
+					 if(!u.isServer() && !u.getSocket().equals(usr.getSocket()) && u.getChatId()!=-1){
 						 unicastMsg(usr,s2);
 					 }
 				 }
 				 for(User u: farUsers){
-					 String s2 = "ARRV " +  u.getChatId() + "\r\n" +  u.getChatName() + "\r\n" +  u.getChatDescription()+"\r\n"+u.getHopCount();
-					 unicastMsg(usr,s2);
+					 if(u.getChatId()!=-1){
+						 String s2 = "ARRV " +  u.getChatId() + "\r\n" +  u.getChatName() + "\r\n" +  u.getChatDescription()+"\r\n"+u.getHopCount();
+						 unicastMsg(usr,s2); 
+					 }
 				 }
 			}
 			break;
@@ -338,7 +344,7 @@ public class DNChat implements DNChatInterface {
 			}
 			// ... and send message to receiver(s)
 			String s = "SEND " +  msgNr + "\r\n"+ message[1]+ "\r\n" + usr.getChatId() + "\r\n" + message[2];
-			String sClient="SEND "+msgNr+"\r\n"+message[1]+"\r\n"+message[2];
+			String sClient="SEND "+msgNr+"\r\n"+usr.getChatId()+"\r\n"+message[2];
 			// to all currently logged in users
 			if (message[1].equals("*")) {
 				propagateMsgToClients(sClient, usr);
