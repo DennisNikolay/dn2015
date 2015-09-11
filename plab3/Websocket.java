@@ -382,7 +382,7 @@ public class Websocket {
 	 */
 	private void sendMessage(String content, int opcode){
 		byte[] data=content.getBytes();
-		byte first=(byte) (((byte)10000000)|(byte)opcode);
+		byte first=(byte) (((byte)0b10000000)|(byte)opcode);
 		byte[] payload;
 		if(data.length<126){
 			payload=new byte[1];
@@ -429,7 +429,7 @@ public class Websocket {
 	
 	private void sendMessageAsClient(String content, int opcode){
 		byte[] data=content.getBytes();
-		byte first=(byte) (((byte)10000000)|(byte)opcode);
+		byte first=(byte) (((byte)0b10000000)|(byte)opcode);
 		byte[] payload;
 		if(data.length<126){
 			payload=new byte[1];
@@ -458,7 +458,7 @@ public class Websocket {
 		Random r=new Random();
 		r.nextBytes(mask);
 		byte[] msg=new byte[1+payload.length+data.length+mask.length];
-		payload[0]=(byte) (((byte)10000000)|payload[0]);
+		payload[0]=(byte) (((byte)0b10000000)|payload[0]);
 		msg[0]=first;
 		int i;
 		for(i=1; i<=payload.length; i++){
