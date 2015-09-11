@@ -92,6 +92,44 @@ public class WebsocketMessage {
 		}
 		return result;
 	}
+	
+	/**
+	 * Gets the raw data without unmasking
+	 */
+	public String getData(){
+		byte[] bytes=new byte[4];
+		String result="";
+		int mod4=0;
+		BigInteger payloadsizer=getPayloadSize();
+		for(BigInteger i=BigInteger.ZERO; i.compareTo(payloadsizer)<0; i=i.add(BigInteger.ONE)){
+			mod4=i.mod(BigInteger.valueOf((long)4)).intValue();
+			try {
+				bytes[mod4]=payloadData.readByte();
+				if(mod4==3){
+					result+=new String(bytes, "UTF-8");
+					bytes=new byte[4];
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		int payloadSizeMod4=getPayloadSize().mod(BigInteger.valueOf((long)4)).intValue();
+		if(payloadSizeMod4!=0){
+			byte[] bytes2=new byte[payloadSizeMod4];
+			for(int i=payloadSizeMod4; i>0; i--){
+				bytes2[payloadSizeMod4-i]=bytes[payloadSizeMod4-i];
+			}
+			try {
+				result+=new String(bytes2, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return result;
+	}
+	
 	/**
 	 * helper method that decodes bytes with masking key.
 	 * @param encoded

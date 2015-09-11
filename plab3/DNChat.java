@@ -369,6 +369,7 @@ public class DNChat implements DNChatInterface {
 			}
 			if(head[1].equals(String.valueOf(0))){
 				usr.setServer(true);
+				usr.getSocket().setMask(false);
 				usr.setHopCount(1);
 				break;
 			}else{
@@ -490,5 +491,21 @@ public class DNChat implements DNChatInterface {
 	
 	synchronized public Map<Integer,User> getUsers(){
 		return clients;
+	}
+	
+	
+	synchronized public void reportServerDown(Websocket server){
+		for(Iterator<User> iter=farUsers.iterator(); iter.hasNext();){
+			User u=iter.next();
+			if(u.getSocket().equals(server)){
+				String msg="LEFT " + String.format("%.0f", u.getChatId());
+				propagateMsgToServers(msg, server);
+				propagateMsgToClients(msg, null);
+				iter.remove();
+			}
+		}
+		clients.remove(server.getID());
+		server.doClose.set(true);
+		System.out.println("Server Down!");
 	}
 }

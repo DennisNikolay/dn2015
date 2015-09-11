@@ -44,6 +44,7 @@ public class WebsocketThread extends Thread {
 			Websocket websocket=new Websocket(in, new DataOutputStream(socket.getOutputStream()));
 			websocket.sendTextAsClient("SRVR 0");
 			Lobby.dnChat.setServer(websocket);
+			websocket.setMask(true);
 			websocket.doYourJob();
 			socket.close();
 		} catch (IOException | OperationNotSupportedException e) {

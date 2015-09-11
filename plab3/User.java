@@ -119,6 +119,7 @@ public class User {
 		isServer=b;
 		if(isServer){
 			ArrivePropagationThread.propagateArrival();
+			this.socket.startToPing();
 		}
 	}
 	

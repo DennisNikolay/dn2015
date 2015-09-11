@@ -2,16 +2,14 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.naming.OperationNotSupportedException;
-
-import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 /**
  * Implements Websocket behavior.
@@ -39,6 +37,12 @@ public class Websocket {
 	private DataInputStream in;
 	private int ID;
 	private static int idCounter=0;
+	private Date lastPong;
+	private Thread pingThread;
+	private final double TIMEOUT_SEC=0.5;
+	private final double TIME_SLEEP_SEC=0.2;
+	private boolean shouldMask;
+	
 	/**
 	 * Edited by 1 DNChat Object, Read by 1 this (concurrently)
 	 */
@@ -61,7 +65,19 @@ public class Websocket {
 		out=outStream;
 		ID=idCounter;
 		idCounter++;
-		Lobby.dnChat.addClient(this);	
+		Lobby.dnChat.addClient(this);
+		pingThread=new Thread(){
+			public void run(){
+				while(!this.isInterrupted()){
+					sendPing();
+					try{
+						sleep((long) (1000*TIME_SLEEP_SEC));
+					}catch(InterruptedException e){
+						this.interrupt();
+					}
+				}
+			}
+		};
 	}
 	
 	public Websocket(DataInputStream inStream, DataOutputStream outStream, boolean isServer){
@@ -89,8 +105,11 @@ public class Websocket {
 					case PING:
 						handlePing(msg);
 						break;
-					case CLOSE:
+					case CLOSE:						
 						handleClose(msg);
+						break;
+					case PONG:
+						handlePong(msg);
 						break;
 					default:
 						throw new OperationNotSupportedException();					
@@ -124,7 +143,7 @@ public class Websocket {
 			BigInteger payloadSize3=BigInteger.ZERO;
 			//Command Type
 			byte opcode=getOpcode(b);
-			if(!isSetBit(b,0) || (0x0)==opcode){
+			if(!isSetBit(b,7) || (0x0)==opcode){
 				//TODO: Close Connection and give response because fragmented Websocket message
 				//TODO: check reason for error.
 				closeConnection(0);
@@ -290,7 +309,9 @@ public class Websocket {
 			msg[i+j]=data[j];
 		}
 		try {
-			//System.out.println(new String(msg));
+			if(connectionIsDead()){
+				return;
+			}
 			out.write(msg, 0, msg.length);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -344,12 +365,23 @@ public class Websocket {
 			msg[i+k+j]=data[j];
 		}
 		try {
-			//System.out.println(new String(msg));
+			if(connectionIsDead()){
+				return;
+			}
 			out.write(msg, 0, msg.length);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	private boolean connectionIsDead(){
+		if(lastPong != null && new Date().getTime()-this.lastPong.getTime()>1000*TIMEOUT_SEC){
+			Lobby.dnChat.reportServerDown(this);
+			this.doClose.set(true);
+			return true;
+		}
+		return false;
 	}
 	
 	private byte[] getEncodedBytes(byte[] toEncode, byte[] maskingKey){
@@ -368,9 +400,20 @@ public class Websocket {
 		if(msg.getType()!=WebsocketMessage.MessageType.PING){
 			throw new IllegalArgumentException();
 		}
-		sendMessage(msg.getDecodedData(), 10);
+		sendMessageAsClient(msg.getData(), 10);
 	}
 
+	private void handlePong(WebsocketMessage msg){
+		if(msg.getType()!=WebsocketMessage.MessageType.PONG){
+			throw new IllegalArgumentException();
+		}
+		msg.getData();
+		lastPong=new Date();
+	}
+	
+	private void sendPing(){
+		sendMessageAsClient("PING", 9);
+	}
 	
 	/**
 	 * helper method to handle client side initiated close
@@ -389,6 +432,7 @@ public class Websocket {
 	 * @param reason
 	 */
 	private void closeConnection(int reason){
+		this.stopToPing();
 		readyState=State.CLOSING;
 		sendMessage(String.valueOf(reason),8);
 	}
@@ -398,7 +442,7 @@ public class Websocket {
 	 * @return
 	 */
 	private byte getOpcode(byte b){
-		return (byte) (((byte)00001111)&b);
+		return (byte) (((byte)0b00001111)&b);
 	}
 	
 	@Override
@@ -417,5 +461,22 @@ public class Websocket {
 		return "Websocket [ID=" + ID + "]";
 	}
 
+	public void startToPing(){
+		pingThread.start();
+	}
+	
+	public void stopToPing(){
+		if(pingThread.isAlive()){
+			pingThread.interrupt();
+		}
+	}
+	
+	public boolean shouldMask(){
+		return shouldMask;
+	}
+	
+	public void setMask(boolean b){
+		shouldMask=b;
+	}
 	
 }
