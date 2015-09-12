@@ -34,3 +34,5 @@ Remarks:
 	 You can adjust these parameters in Websocket.java.
 	 Although this seems to be a nice feature it may cause some problems depending on the 		  network setup (server detected down although it is not), because of e.g. to high network 		  delay or unexpected behavior of other implementation (e.g. doesn't respond to ping 	 	   immediately).
 	 You can totaly turn off the connection loss detection by setting the parameter SENSE_MODE to 	        false in DNChat.java
+
+If you got questions, please contact s9mzbec2@stud.uni-saarland.de and/or s9dsniko@stud.uni-saarland.de
