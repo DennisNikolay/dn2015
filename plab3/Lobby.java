@@ -24,7 +24,7 @@ public class Lobby {
 	/**
 	 * The Standard port of the server
 	 */
-	private static int port=42011;
+	private static int port=42015;
 	/**
 	 * The Http-socket for handshakeing
 	 *
@@ -55,7 +55,7 @@ public class Lobby {
 				new ClientThread(out, in, connection).start();
 			}
 		} catch (IOException e) {
-			System.out.println("Not valid");
+			//System.out.println("Not valid");
 			//TODO: e.printStackTrace();
 		}	
 	}
