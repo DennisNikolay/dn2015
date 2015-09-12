@@ -51,7 +51,7 @@ public class WebsocketThread extends Thread {
 			websocket.doYourJob();
 			socket.close();
 		} catch (IOException | OperationNotSupportedException e) {
-			// e.printStackTrace();
+			//TODO: e.printStackTrace();
 		}
 		
 	}

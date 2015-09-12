@@ -124,8 +124,7 @@ public class Websocket {
 					closeConnection(1001);
 				}
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				// TODO e.printStackTrace();
 			}
 		}
 	}
@@ -228,8 +227,7 @@ public class Websocket {
 			return msg;
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			// TODO e.printStackTrace();
 			return null;
 		}
 		
@@ -252,8 +250,8 @@ public class Websocket {
 			if(!isSetBit(b,7) || (0x0)==opcode){
 				//TODO: Close Connection and give response because fragmented Websocket message
 				//TODO: check reason for error.
-				System.out.println(!isSetBit(b,7));
-				System.out.println(b);
+				//System.out.println(!isSetBit(b,7));
+				//System.out.println(b);
 				closeConnection(0);
 			}
 			if(((byte)0x1)==opcode){
@@ -263,7 +261,7 @@ public class Websocket {
 				type=WebsocketMessage.MessageType.BINARY;
 			}
 			if(((byte)0x8)==opcode){
-				System.out.println("CLOSE!!");
+				//System.out.println("CLOSE!!");
 				type=WebsocketMessage.MessageType.CLOSE;
 			}
 			if(((byte)0x9)==opcode){
@@ -275,8 +273,8 @@ public class Websocket {
 			b=in.readByte();
 			if(isSetBit(b, 7)){
 				//TODO: Check reason.
-				System.out.println(isSetBit(b,7));
-				System.out.println(b);
+				//System.out.println(isSetBit(b,7));
+				//System.out.println(b);
 				closeConnection(0);
 			}
 			//Read in payloadSize
@@ -331,8 +329,7 @@ public class Websocket {
 			return msg;
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			// TODO e.printStackTrace();
 			return null;
 		}
 		
@@ -362,7 +359,7 @@ public class Websocket {
 	 * @param content
 	 */
 	public void sendText(String content){
-		System.out.println("SENT TO CLIENT: "+content);
+		//System.out.println("SENT TO CLIENT: "+content);
 		sendMessage(content, 1);
 	}
 	/**
@@ -370,7 +367,7 @@ public class Websocket {
 	 * @param content
 	 */
 	public void sendTextAsClient(String content){
-		System.out.println("SENT TO SERVER: "+content);
+		//System.out.println("SENT TO SERVER: "+content);
 		sendMessageAsClient(content, 1);
 	}
 	

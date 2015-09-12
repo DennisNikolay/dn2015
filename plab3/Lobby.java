@@ -27,7 +27,11 @@ public class Lobby {
 	private static int port=42011;
 	/**
 	 * The Http-socket for handshakeing
+	 *
 	 */
+	
+	private static final boolean READ_IN_PORT=false;
+	
 	public static ServerSocket httpSocket;
 	/**
 	 * Creates a global DNChat Object and assigns it to the static field dnChat,
@@ -38,7 +42,9 @@ public class Lobby {
 	 */
 	public static void main(String[] args) {
 		dnChat = new DNChat();
-		readPortFromCommandLine();
+		if(READ_IN_PORT){
+			readPortFromCommandLine();
+		}
 		try {
 			httpSocket = new ServerSocket(port);
 			new ConnectThread().start();
@@ -49,6 +55,7 @@ public class Lobby {
 				new ClientThread(out, in, connection).start();
 			}
 		} catch (IOException e) {
+			System.out.println("Not valid");
 			//TODO: e.printStackTrace();
 		}	
 	}
@@ -63,7 +70,7 @@ public class Lobby {
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
-				// e.printStackTrace();
+				// TODO: e.printStackTrace();
 			}
 		}
 		port=d.nextInt();

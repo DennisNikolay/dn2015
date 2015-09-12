@@ -110,11 +110,11 @@ public class ClientThread extends Thread {
 			try {
 				MessageDigest md=MessageDigest.getInstance("SHA-1");
 				String s=secWebsocketKey+GUID;
-				System.out.println("HTTP/1.1 101 Switching Protocols \r\n" +
+				/*System.out.println("HTTP/1.1 101 Switching Protocols \r\n" +
 						"Upgrade: websocket \r\n" +
 						"Connection: Upgrade \r\n" +
 						"Sec-WebSocket-Accept: " + Base64.encode(md.digest(s.getBytes()))
-						+"\r\n\r\n");
+						+"\r\n\r\n");*/
 				out.writeBytes("HTTP/1.1 101 Switching Protocols \r\n" +
 						"Upgrade: websocket \r\n" +
 						"Connection: Upgrade \r\n" +
@@ -142,7 +142,7 @@ public class ClientThread extends Thread {
 	 */
 	private void giveBadResponse(String reason){
 		try {
-			System.out.println("HTTP/1.1 400 Bad Request, because "+reason+"\r\n");
+			//System.out.println("HTTP/1.1 400 Bad Request, because "+reason+"\r\n");
 			out.writeBytes("HTTP/1.1 400 Bad Request, because "+reason+"\r\n");
 		} catch (IOException e) {
 			//TODO: e.printStackTrace();
@@ -176,7 +176,7 @@ public class ClientThread extends Thread {
 				break;
 			}
 			while(line!=null){
-				System.out.println(line);
+				//System.out.println(line);
 				if(line==null||line.isEmpty()){
 					break;
 				}

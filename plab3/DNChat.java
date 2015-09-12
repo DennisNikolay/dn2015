@@ -26,8 +26,8 @@ public class DNChat implements DNChatInterface {
 	/**
 	 * The group pw used to login.
 	 */
-	//private final String pw = "pKQmqLe6";
-	private final String pw = "12345";
+	private final String pw = "pKQmqLe6";
+	//private final String pw = "12345";
 	/**
 	 * The group description/number.
 	 */
@@ -277,7 +277,7 @@ public class DNChat implements DNChatInterface {
 	 */
 	@Override
 	synchronized public void pushMessage(Websocket socket, String msg) {
-		System.out.println("GOT: "+msg);
+		//System.out.println("GOT: "+msg);
 		String[] message = msg.split("\r\n");
 		String[] head = message[0].split(" ");
 		String output = "";
