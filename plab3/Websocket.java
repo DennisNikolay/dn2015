@@ -39,8 +39,8 @@ public class Websocket {
 	private static int idCounter=0;
 	private Date lastPong;
 	private Thread pingThread;
-	private final double TIMEOUT_SEC=10;
-	private final double TIME_SLEEP_SEC=4;
+	private final double TIMEOUT_SEC=30;
+	private final double TIME_SLEEP_SEC=1;
 	private boolean shouldMask=false;
 	
 	/**
@@ -79,18 +79,7 @@ public class Websocket {
 			}
 		};
 	}
-	/**
-	 * Constructor as above plus additionally sets server status
-	 * @param inStream
-	 * @param outStream
-	 * @param isServer
-	 */
-	public Websocket(DataInputStream inStream, DataOutputStream outStream, boolean isServer){
-		this(inStream, outStream);
-		if(isServer){
-			Lobby.dnChat.setServer(this);	
-		}
-	}
+
 	
 	/**
 	 * Checks regulary for incoming messages, sends them to DNChat
@@ -429,7 +418,7 @@ public class Websocket {
 			}
 			out.write(msg, 0, msg.length);
 		} catch (IOException e) {
-			e.printStackTrace();
+			//TODO: e.printStackTrace();
 			connectionIsDead();
 		}
 	}
@@ -489,7 +478,7 @@ public class Websocket {
 			}
 			out.write(msg, 0, msg.length);
 		} catch (IOException e) {
-			e.printStackTrace();
+			//TODO: e.printStackTrace();
 			connectionIsDead();
 		}
 	}
@@ -631,12 +620,18 @@ public class Websocket {
 	 * Starts to ping regulary
 	 */
 	public void startToPing(){
+		if(Lobby.dnChat.SENSE_MODE==false){
+			return;
+		}
 		pingThread.start();
 	}
 	/**
 	 * stops the regular pings (called if connection is dead)
 	 */
 	public void stopToPing(){
+		if(Lobby.dnChat.SENSE_MODE==false){
+			return;
+		}
 		if(pingThread.isAlive()){
 			pingThread.interrupt();
 		}

@@ -5,7 +5,6 @@ import java.math.BigInteger;
 
 /**
  * Class Representing a Websocket Message.
- * @author dennis
  *
  */
 public class WebsocketMessage {
@@ -111,8 +110,7 @@ public class WebsocketMessage {
 					bytes=new byte[4];
 				}
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				// TODO e.printStackTrace();
 			}
 		}
 		int payloadSizeMod4=getPayloadSize().mod(BigInteger.valueOf((long)4)).intValue();
@@ -124,8 +122,7 @@ public class WebsocketMessage {
 			try {
 				result+=new String(getDecodedBytes(bytes2), "UTF-8");
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				// TODO e.printStackTrace();
 			}
 		}
 		return result;

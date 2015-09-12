@@ -48,20 +48,22 @@ public class Lobby {
 				DataOutputStream out=new DataOutputStream(connection.getOutputStream());
 				new ClientThread(out, in, connection).start();
 			}
-		} catch (IOException e) {e.printStackTrace();}	
+		} catch (IOException e) {
+			//TODO: e.printStackTrace();
+		}	
 	}
 	/**
 	 * Reads the port of this server from the command line
 	 */
 	private static void readPortFromCommandLine(){
+		@SuppressWarnings("resource")
 		Scanner d=new Scanner(System.in);
 		d.useDelimiter("\n");
 		while(!d.hasNext()){
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				// e.printStackTrace();
 			}
 		}
 		port=d.nextInt();

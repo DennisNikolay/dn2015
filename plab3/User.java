@@ -2,7 +2,6 @@ import java.util.LinkedList;
 
 /**
  * The user class representing the clients connected to the server.
- * @author Mo
  *
  */
 public class User {
@@ -118,7 +117,6 @@ public class User {
 	public void setServer(boolean b){
 		isServer=b;
 		if(isServer){
-			ArrivePropagationThread.propagateArrival();
 			this.socket.startToPing();
 		}
 	}

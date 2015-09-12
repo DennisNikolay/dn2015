@@ -46,11 +46,11 @@ public class WebsocketThread extends Thread {
 			String number=toSrvrNumber(Lobby.dnChat.getPassword());
 			websocket.sendTextAsClient("SRVR "+number);
 			Lobby.dnChat.setServer(websocket);
+			Lobby.dnChat.propagateArrivals(Lobby.dnChat.getUsers().get(websocket.getID()));
 			websocket.doYourJob();
 			socket.close();
 		} catch (IOException | OperationNotSupportedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			// e.printStackTrace();
 		}
 		
 	}

@@ -5,7 +5,6 @@ import java.util.Scanner;
 
 /**
  * Class that checks StdIn for connect or exit commands
- * @author dennis
  *
  */
 public class ConnectThread extends Thread {
@@ -35,7 +34,7 @@ public class ConnectThread extends Thread {
 					try {
 						Lobby.httpSocket.close();
 					} catch (IOException e) {
-						e.printStackTrace();
+						//TODO: e.printStackTrace();
 					}
 					Thread.currentThread().interrupt();
 				}
@@ -48,15 +47,15 @@ public class ConnectThread extends Thread {
 						Socket s=new Socket(con[1], port );
 						new WebsocketThread(s).start();
 					} catch (NumberFormatException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						// TODO e.printStackTrace();
+						System.out.println("The third argument must be a valid portnumber");
 					} catch (UnknownHostException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						System.out.println("Could not find Host");
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						// TODO e.printStackTrace();
 					}
+				}else if(!con[0].equals("exit")){
+					System.out.println("Unknown Command");
 				}
 			}
 		}

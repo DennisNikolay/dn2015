@@ -1,6 +1,5 @@
 import java.rmi.UnexpectedException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -9,7 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The DNChat class which encapsulates the DNChat protocol. 
- * @author Mo
  *
  */
 public class DNChat implements DNChatInterface {
@@ -45,6 +43,12 @@ public class DNChat implements DNChatInterface {
 
 	private final int maxMsgLength = 1000;
 
+	/**
+	 * If this is set to true, the server tries to detect server crashes
+	 * This might cause problems, e.g. a server with delay may be sensed as down
+	 */
+	public final boolean SENSE_MODE=true;
+	
 	
 	/**
 	 * DNChat constructor called by Lobby.
@@ -138,6 +142,9 @@ public class DNChat implements DNChatInterface {
 					msg=message[0]+"\r\n"+message[1]+"\r\n"+message[2]+"\r\n"+message[3];
 					propagateMsgToServers(msg, socket);
 				}
+				if(clients.get(getUser(head[1]).getSocket().getID()).equals(socket)){
+					unicastMsg(clients.get(getUser(head[1]).getSocket().getID()),"LEFT "+head[1]);
+				}
 			}else{
 				//There is no connection to the User.
 				String descript=message[2];
@@ -153,6 +160,7 @@ public class DNChat implements DNChatInterface {
 				msg=message[0]+"\r\n"+message[1]+"\r\n"+message[2]+"\r\n"+message[3];
 				propagateMsgToClients(msg);
 				propagateMsgToServers(msg, socket);
+				unicastMsg(clients.get(getUser(head[1]).getSocket().getID()),"LEFT "+head[1]);
 			}
 			break;
 		case "ACKN":
@@ -164,14 +172,17 @@ public class DNChat implements DNChatInterface {
 			if(left==null){
 				return;
 			}
-			if(clients.get(left.getSocket().getID()).getSocket().equals(socket)){
+			User otherConnection=Lobby.dnChat.clients.get(left.getSocket().getID());
+			//Was I connected to that User over the sending server?
+			if(otherConnection.getSocket().equals(socket)){
 				farUsers.remove(left);
 				propagateMsgToServers(msg, socket);
 				propagateMsgToClients(msg, null);
 			}else{
 				//TODO:THINK HERE COUNT TO INFINITY PROBLEM
 				//IDEA OF THIS LINE: "Oh you lost your connection to that user? Well I've got a connection to that user not running over you"
-				//socket.sendTextAsClient("ARRV " + left.getChatId() + "\r\n" +  left.getChatName() + "\r\n" +  left.getChatDescription()+"\r\n"+left.getHopCount());
+				if(otherConnection!=null)
+					unicastMsg(Lobby.dnChat.clients.get(socket.getID()), "ARRV " + left.getChatId() + "\r\n" +  left.getChatName() + "\r\n" +  left.getChatDescription()+"\r\n"+left.getHopCount());
 			}
 			break;
 		}
@@ -236,8 +247,7 @@ public class DNChat implements DNChatInterface {
 				try {
 					throw new UnexpectedException("This should not happen");
 				} catch (UnexpectedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					// TODO e.printStackTrace();
 				}
 			}
 		}
@@ -398,6 +408,7 @@ public class DNChat implements DNChatInterface {
 				usr.setServer(true);
 				usr.getSocket().setMask(false);
 				usr.setHopCount(1);
+				propagateArrivals(usr);
 				break;
 			}else{
 				handleInvdMsg(socket);
@@ -407,6 +418,26 @@ public class DNChat implements DNChatInterface {
 		default:
 			handleInvdMsg(socket);
 			break;
+		}
+	}
+	/**
+	 * Propagates all connected users to the user usr
+	 * @param usr
+	 */
+	public void propagateArrivals(User usr){
+		for(Iterator<User> iter=clients.values().iterator(); iter.hasNext();){
+			User u=iter.next();
+			if(!u.isServer() && u.getChatId()!=-1){
+				String ar="ARRV " + u.getChatId() + "\r\n" +  u.getChatName() + "\r\n" +  u.getChatDescription()+"\r\n"+u.getHopCount();
+				unicastMsg(usr, ar);
+			}
+		}
+		for(Iterator<User> iter=farUsers.iterator(); iter.hasNext();){
+			User u=iter.next();
+			if(!u.isServer() && u.getChatId()!=-1){
+				String ar="ARRV " + u.getChatId() + "\r\n" +  u.getChatName() + "\r\n" +  u.getChatDescription()+"\r\n"+u.getHopCount();
+				unicastMsg(usr, ar);
+			}
 		}
 	}
 	
@@ -460,7 +491,6 @@ public class DNChat implements DNChatInterface {
 	@Override
 	synchronized public void removeClient(Websocket socket) {
 		User leftUser = clients.remove(socket.getID());
-		socket.doClose.set(true);
 		if(!leftUser.isServer()){
 			String s = "LEFT " + leftUser.getChatId();
 			for (Iterator<User> iterator = clients.values().iterator(); iterator.hasNext();) {
@@ -468,6 +498,7 @@ public class DNChat implements DNChatInterface {
 				unicastMsg(u, s);
 			}
 		}
+		socket.doClose.set(true);
 	}
 
 	/**
@@ -541,10 +572,15 @@ public class DNChat implements DNChatInterface {
 	 * Called when a server is down, removes the clients from that server
 	 * @param server
 	 */
+	@SuppressWarnings("unused")
 	synchronized public void reportServerDown(Websocket server){
-		if(!clients.get(server.getID()).isServer()){
+		if(SENSE_MODE==false){
 			return;
 		}
+		if(clients.get(server.getID())==null || !clients.get(server.getID()).isServer()){
+			return;
+		}
+		clients.remove(server.getID());
 		for(Iterator<User> iter=farUsers.iterator(); iter.hasNext();){
 			User u=iter.next();
 			if(u.getSocket().equals(server)){
@@ -554,9 +590,9 @@ public class DNChat implements DNChatInterface {
 				iter.remove();
 			}
 		}
-		clients.remove(server.getID());
 		server.doClose.set(true);
-		System.out.println("Server Down!");
+		System.err.println("The connection to another server is down!");
+		
 	}
 	
 	synchronized public String getPassword(){

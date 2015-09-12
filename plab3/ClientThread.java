@@ -28,6 +28,7 @@ public class ClientThread extends Thread {
     private final String GUID="258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     private boolean doAgain=true;
     private Socket socket;
+    private final int SLEEP_CLOSE_SEC=5;
     
     /**
      * Constructor for ClientThread
@@ -52,6 +53,11 @@ public class ClientThread extends Thread {
 	public void run(){
 		while(doAgain){
 			performHandshake();
+		}
+		try {
+			sleep(SLEEP_CLOSE_SEC*1000);
+		} catch (InterruptedException e) {
+			// TODO e.printStackTrace();
 		}
 		closeConnection();
 	}
@@ -119,15 +125,12 @@ public class ClientThread extends Thread {
 					webSocket.doYourJob();
 					doAgain=false;
 				} catch (OperationNotSupportedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					//TODO: e.printStackTrace();
 				}
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				//TODO: e.printStackTrace();
 			} catch (NoSuchAlgorithmException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				//TODO: e.printStackTrace();
 			}
 			
 			
@@ -142,8 +145,7 @@ public class ClientThread extends Thread {
 			System.out.println("HTTP/1.1 400 Bad Request, because "+reason+"\r\n");
 			out.writeBytes("HTTP/1.1 400 Bad Request, because "+reason+"\r\n");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//TODO: e.printStackTrace();
 		}
 	}
 	

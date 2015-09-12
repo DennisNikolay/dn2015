@@ -5,7 +5,6 @@
  * Message(String) in the public outBuffer of the Websocket, e.g. socket.outBuffer.add("Hallo");
  * If the DNChat Object wants to close the connection, it does this by setting the
  * AtomicBoolean doClose of the socket, e.g. socket.doClose = new AtomicBoolean(true);
- * @author dennis
  *
  */
 public interface DNChatInterface {
