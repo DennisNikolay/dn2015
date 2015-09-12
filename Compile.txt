@@ -14,18 +14,23 @@ mkdir bin; javac -d bin -sourcepath src src/Lobby.java
 
 java -cp bin Lobby
 
-To assign a port to the server simply insert it into the command line prompt.
+The port of the server is 42015. You can enable reading in the port of the server from the command line by setting READ_IN_PORT to true in Lobby.java
 
 
 3. To connect local server(s) to modestchecker.net use the following command line as stated in the project documentation:
 
-connect modestchecker.net 42015
+connect modestchecker.net (optional [port], default 42015)
 
 To connect two local servers with eachother use different ports:
 
-connect localserver [port]
+connect localhost [port, default 42015]
 
 
 
-Remark: Base64 included in the standard Java SDK is used for encoding and decoding.
-
+Remarks: 
+	-Base64 included in the standard Java SDK is used for encoding and decoding.
+	 
+	-Our server implementation is capable of detecting connection losses. It does so via sending 		  pings ~every TIME_SLEEP_SEC seconds and if the last pong of the other server was received 		  more TIMEOUT_SEC seconds ago, it closes the connection to the server. 
+	 You can adjust these parameters in Websocket.java.
+	 Although this seems to be a nice feature it may cause some problems depending on the 		  network setup (server detected down although it is not), because of e.g. to high network 		  delay or unexpected behavior of other implementation (e.g. doesn't respond to ping 	 	   immediately).
+	 You can totaly turn off the connection loss detection by setting the parameter SENSE_MODE to 	        false in DNChat.java

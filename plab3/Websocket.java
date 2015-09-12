@@ -569,7 +569,6 @@ public class Websocket {
 	 * @param reason
 	 */
 	private void closeConnection(int reason){
-		Thread.dumpStack();
 		this.stopToPing();
 		if(shouldMask){
 			synchronized(DNChat.class){
