@@ -1,0 +1,31 @@
+How to get the server(s) run:
+
+0. All .java files are located in the src folder at the top level of the .zip file.
+A bin folder at the top level of the .zip file will contain all .class files after compiling.
+Lobby.java is the main class of our project including the main method.
+
+1. Compile the .java files included in the src folder at the top level of the .zip file
+using the following command line:
+
+mkdir bin; javac -d bin -sourcepath src src/Lobby.java
+
+
+2. Starting a server on the local machine by launching Lobby.java using the following command line:
+
+java -cp bin Lobby
+
+To assign a port to the server simply insert it into the command line prompt.
+
+
+3. To connect local server(s) to modestchecker.net use the following command line as stated in the project documentation:
+
+connect modestchecker.net 42015
+
+To connect two local servers with eachother use different ports:
+
+connect localserver [port]
+
+
+
+Remark: Base64 included in the standard Java SDK is used for encoding and decoding.
+
