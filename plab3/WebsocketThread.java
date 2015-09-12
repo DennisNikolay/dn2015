@@ -41,12 +41,13 @@ public class WebsocketThread extends Thread {
 			while(line!=null && !line.isEmpty()){
 				line=readIn.readLine();
 			}
-			Websocket websocket=new Websocket(in, new DataOutputStream(socket.getOutputStream()));
-			websocket.setMask(true);
+			Websocket websocket=new Websocket(in, new DataOutputStream(socket.getOutputStream()), true);
 			String number=toSrvrNumber(Lobby.dnChat.getPassword());
 			websocket.sendTextAsClient("SRVR "+number);
 			Lobby.dnChat.setServer(websocket);
-			Lobby.dnChat.propagateArrivals(Lobby.dnChat.getUsers().get(websocket.getID()));
+			synchronized(DNChat.class){
+				Lobby.dnChat.propagateArrivals(Lobby.dnChat.getUsers().get(websocket.getID()));
+			}
 			websocket.doYourJob();
 			socket.close();
 		} catch (IOException | OperationNotSupportedException e) {

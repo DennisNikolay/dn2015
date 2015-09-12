@@ -53,18 +53,20 @@ public class Websocket {
 	public AtomicBoolean doClose=new AtomicBoolean(false);
 	
 	
+
 	/**
 	 * Initializes a Websocket over the given input and output stream
 	 * Handshake has already been performed, Server already 101 Switch Protocol
 	 * @param inStream
 	 * @param outStream
 	 */
-	public Websocket(DataInputStream inStream, DataOutputStream outStream){
+	public Websocket(DataInputStream inStream, DataOutputStream outStream, boolean mask){
 		readyState=State.OPEN;
 		in=inStream;
 		out=outStream;
 		ID=idCounter;
 		idCounter++;
+		setMask(mask);
 		Lobby.dnChat.addClient(this);
 		pingThread=new Thread(){
 			public void run(){
@@ -117,10 +119,6 @@ public class Websocket {
 					default:
 						throw new OperationNotSupportedException();					
 					}
-				}
-				if(!outBuffer.isEmpty()){
-					String s=outBuffer.remove();
-					sendText(s);
 				}
 				if(doClose.get()){
 					closeConnection(1001);
@@ -254,6 +252,8 @@ public class Websocket {
 			if(!isSetBit(b,7) || (0x0)==opcode){
 				//TODO: Close Connection and give response because fragmented Websocket message
 				//TODO: check reason for error.
+				System.out.println(!isSetBit(b,7));
+				System.out.println(b);
 				closeConnection(0);
 			}
 			if(((byte)0x1)==opcode){
@@ -263,6 +263,7 @@ public class Websocket {
 				type=WebsocketMessage.MessageType.BINARY;
 			}
 			if(((byte)0x8)==opcode){
+				System.out.println("CLOSE!!");
 				type=WebsocketMessage.MessageType.CLOSE;
 			}
 			if(((byte)0x9)==opcode){
@@ -274,6 +275,8 @@ public class Websocket {
 			b=in.readByte();
 			if(isSetBit(b, 7)){
 				//TODO: Check reason.
+				System.out.println(isSetBit(b,7));
+				System.out.println(b);
 				closeConnection(0);
 			}
 			//Read in payloadSize
@@ -342,7 +345,7 @@ public class Websocket {
 	 */
 	private boolean isSetBit(byte b,int position)
 	{
-	   return (byte) ((b >> position) & 1)==1;
+	   return (byte) ((b >> position) & 0b00000001)==0b00000001;
 	}
 
 	/**
@@ -404,6 +407,7 @@ public class Websocket {
 			payload[4]=rest[3];
 		}
 		byte[] msg=new byte[1+payload.length+data.length];
+		payload[0]=(byte) (((byte)0b01111111)&payload[0]);
 		msg[0]=first;
 		int i;
 		for(i=1; i<=payload.length; i++){
@@ -565,27 +569,32 @@ public class Websocket {
 	 * @param reason
 	 */
 	private void closeConnection(int reason){
+		Thread.dumpStack();
 		this.stopToPing();
 		if(shouldMask){
-			for (Iterator<User> iterator = Lobby.dnChat.getUsers().values().iterator(); iterator.hasNext();) {
-				User u = (User) iterator.next();
-				if(!u.isServer())
-					sendTextAsClient("LEFT "+u.getChatId());				
+			synchronized(DNChat.class){
+				for (Iterator<User> iterator = Lobby.dnChat.getUsers().values().iterator(); iterator.hasNext();) {
+					User u = (User) iterator.next();
+					if(!u.isServer())
+						sendTextAsClient("LEFT "+u.getChatId());				
+				}
+				for (Iterator<User> iterator = Lobby.dnChat.getFarUsers().iterator(); iterator.hasNext();) {
+					User u = (User) iterator.next();
+					sendTextAsClient("LEFT "+u.getChatId());						
+				}
+				sendMessageAsClient(String.valueOf(reason), 8);
 			}
-			for (Iterator<User> iterator = Lobby.dnChat.getFarUsers().iterator(); iterator.hasNext();) {
-				User u = (User) iterator.next();
-				sendTextAsClient("LEFT "+u.getChatId());						
-			}
-			sendMessageAsClient(String.valueOf(reason), 8);
 		}else{
-			for (Iterator<User> iterator = Lobby.dnChat.getUsers().values().iterator(); iterator.hasNext();) {
-				User u = (User) iterator.next();
-				if(!u.isServer())
-					sendText("LEFT "+u.getChatId());				
-			}
-			for (Iterator<User> iterator = Lobby.dnChat.getFarUsers().iterator(); iterator.hasNext();) {
-				User u = (User) iterator.next();
-				sendText("LEFT "+u.getChatId());						
+			synchronized(DNChat.class){
+				for (Iterator<User> iterator = Lobby.dnChat.getUsers().values().iterator(); iterator.hasNext();) {
+					User u = (User) iterator.next();
+					if(!u.isServer())
+						sendText("LEFT "+u.getChatId());				
+				}
+				for (Iterator<User> iterator = Lobby.dnChat.getFarUsers().iterator(); iterator.hasNext();) {
+					User u = (User) iterator.next();
+					sendText("LEFT "+u.getChatId());						
+				}
 			}
 			sendMessage(String.valueOf(reason),8);
 		}

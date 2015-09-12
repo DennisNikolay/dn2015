@@ -88,6 +88,8 @@ public class DNChat implements DNChatInterface {
 		case "SEND":
 			User sender=getUser(message[2]);
 			Long msgNr = Long.parseLong(head[1]);
+			if(sender==null)
+				return;
 			sender.addMsg(msgNr);
 			//Does not have to check conditions in messages, as they are already checked by the server, directly connected to the user
 			if(!message[1].equals("*")){
@@ -116,10 +118,11 @@ public class DNChat implements DNChatInterface {
 			break;
 		case "ARRV":
 			int hopCount=Integer.valueOf(message[3])+1;
+			//Hop count can not be 16
 			if (hopCount>15){
 				String s="LEFT "+head[1];
-				propagateMsgToServers(s, null);
-				if(clients.get(getUser(head[1]).getSocket().getID()).equals(socket)){
+				propagateMsgToServers(s, socket);
+				if(getUser(head[1])==null || clients.get(getUser(head[1]).getSocket().getID()).getSocket().equals(socket)){
 					for(Iterator<User>iterator=farUsers.iterator(); iterator.hasNext();){
 						User u = (User) iterator.next();
 						if(u.getChatId()==Long.parseLong(head[1])) {
@@ -141,9 +144,6 @@ public class DNChat implements DNChatInterface {
 					message[3]=String.valueOf(hopCount);
 					msg=message[0]+"\r\n"+message[1]+"\r\n"+message[2]+"\r\n"+message[3];
 					propagateMsgToServers(msg, socket);
-				}
-				if(clients.get(getUser(head[1]).getSocket().getID()).equals(socket)){
-					unicastMsg(clients.get(getUser(head[1]).getSocket().getID()),"LEFT "+head[1]);
 				}
 			}else{
 				//There is no connection to the User.
@@ -405,8 +405,8 @@ public class DNChat implements DNChatInterface {
 				break;
 			}
 			if(!head[1].equals(String.valueOf(0))){
-				usr.setServer(true);
 				usr.getSocket().setMask(false);
+				usr.setServer(true);
 				usr.setHopCount(1);
 				propagateArrivals(usr);
 				break;
@@ -424,7 +424,7 @@ public class DNChat implements DNChatInterface {
 	 * Propagates all connected users to the user usr
 	 * @param usr
 	 */
-	public void propagateArrivals(User usr){
+	synchronized public void propagateArrivals(User usr){
 		for(Iterator<User> iter=clients.values().iterator(); iter.hasNext();){
 			User u=iter.next();
 			if(!u.isServer() && u.getChatId()!=-1){

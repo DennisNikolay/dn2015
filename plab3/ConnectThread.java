@@ -27,8 +27,10 @@ public class ConnectThread extends Thread {
 					b=false;
 				}
 				if(con[0].equals("exit")){
-					for(User u: Lobby.dnChat.getUsers().values()){
-						u.getSocket().doClose.set(true);
+					synchronized(DNChat.class){
+						for(User u: Lobby.dnChat.getUsers().values()){
+							u.getSocket().doClose.set(true);
+						}
 					}
 					Lobby.shouldTerminate.set(true);
 					try {
